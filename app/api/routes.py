@@ -109,8 +109,8 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                 "processed": 0
             })
             
-            # Procesar en lotes (chunks) concurrentes de 20 comentarios a la vez
-            chunk_size = 20
+            # Procesar en lotes (chunks) conservadores de 10 para respetar el Tier 1 (Rate Limits)
+            chunk_size = 10
             rows = list(df.iterrows())
             
             for i in range(0, total, chunk_size):
@@ -163,6 +163,10 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     "progress": f"{processed} de {total} comentarios procesados ({percent}%)",
                     "processed": processed
                 })
+                
+                # Freno de mano para no sobrepasar los límites de TPM/RPM de OpenAI (Tier 1)
+                if i + chunk_size < total:
+                    await asyncio.sleep(4)
                     
             response_data = {"comments": results}
             
