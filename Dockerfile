@@ -6,6 +6,7 @@ WORKDIR /app
 # Instalar herramientas básicas del sistema operativo que algunas librerías requieren
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # COPIAR SOLO EL REQUIREMENTS PRIMERO (El secreto de la velocidad)
