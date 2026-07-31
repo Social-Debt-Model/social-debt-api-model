@@ -1,0 +1,1070 @@
+{
+  "job_id": "Z2UEIM",
+  "status": "completed",
+  "progress": "10 de 10 comentarios procesados (100%)",
+  "filename": "test_issues.csv",
+  "updated_at": "2026-07-31T01:21:17.985744",
+  "total": 10,
+  "processed": 10,
+  "result": {
+    "comments": [
+      {
+        "issue_number": 101,
+        "comment": "I can't push to the repository, permission denied on the master branch.",
+        "original_text": "I can't push to the repository, permission denied on the master branch.",
+        "cleaned_text": "I can't push to the repository, permission denied on the master branch.",
+        "noise_level": "useful",
+        "is_noise": false,
+        "macro_cause_code": "G",
+        "confidence": 0.9,
+        "rule_applied": "none",
+        "microcauses": [
+          {
+            "cause_id": "CA-012",
+            "cause_name": "Repository access limitation",
+            "similarity": 0.5058566331863403,
+            "ontology_id": "CA-012_RepositoryAccessLimitation",
+            "preventive_strategies": [
+              "PS-025_AccessPlanning"
+            ],
+            "effects": [
+              "PME-021_BlockedProgressDueToAccessLimitation"
+            ],
+            "corrective_strategies": [
+              "CS-025_RequestRepositoryAccess"
+            ],
+            "indicators": [
+              "IND-025_AccessDependencyMentions"
+            ],
+            "metrics": [
+              "MTR-025_AccessDependencyFrequency"
+            ],
+            "risks": [
+              "RSK-025_AccessBottleneckRisk"
+            ],
+            "community_smells": [
+              "Missing Link",
+              "Organizational Silo"
+            ]
+          },
+          {
+            "cause_id": "CA-013",
+            "cause_name": "Inefficient or inadequate tools",
+            "similarity": 0.20308634638786316,
+            "ontology_id": "CA-013_InefficientOrInadequateTools",
+            "preventive_strategies": [
+              "PS-026_ToolingReadinessReview"
+            ],
+            "effects": [
+              "PME-022_ToolingConstraint"
+            ],
+            "corrective_strategies": [
+              "CS-026_ImproveToolingSupport"
+            ],
+            "indicators": [
+              "IND-026_ToolingLimitationMentions"
+            ],
+            "metrics": [
+              "MTR-026_ToolingLimitationFrequency"
+            ],
+            "risks": [
+              "RSK-026_ToolingRisk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Socio-Technical Congruence Gap"
+            ]
+          },
+          {
+            "cause_id": "CA-008",
+            "cause_name": "Lack of resources (time, people, budget)",
+            "similarity": 0.1855519711971283,
+            "ontology_id": "CA-008_LackOfResources",
+            "preventive_strategies": [
+              "PS-029_ResourceAvailabilityPlanning"
+            ],
+            "effects": [
+              "AEF-004_LimitedResourceAccess",
+              "IEF-001_StressManagement",
+              "PME-003_DelaysInTaskDelivery"
+            ],
+            "corrective_strategies": [
+              "CS-028_TaskDeliveryRecoveryPlan",
+              "STR-007_ResourceInventoryReview",
+              "STR-008_ThirdPartyResourceSupport",
+              "STR-I-001_StressManagementWorkshops",
+              "STR-I-002_MindfulnessTraining"
+            ],
+            "indicators": [
+              "IND-005_Team_Engagement_Rate"
+            ],
+            "metrics": [
+              "MTR-002_Feedback_Loop_Frequency",
+              "MTR-006_Team_Collaboration_Intensity"
+            ],
+            "risks": [
+              "RSK-004_Limited_Resource_Access_Risk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Truck Factor"
+            ]
+          }
+        ]
+      },
+      {
+        "issue_number": 101,
+        "comment": "The server keeps crashing because we don't have enough memory to run the tests.",
+        "original_text": "The server keeps crashing because we don't have enough memory to run the tests.",
+        "cleaned_text": "The server keeps crashing because we don't have enough memory to run the tests.",
+        "noise_level": "useful",
+        "is_noise": false,
+        "macro_cause_code": "G",
+        "confidence": 0.9,
+        "rule_applied": "G_validation_tooling_evidence_confirmed",
+        "microcauses": [
+          {
+            "cause_id": "CA-008",
+            "cause_name": "Lack of resources (time, people, budget)",
+            "similarity": 0.23548705875873566,
+            "ontology_id": "CA-008_LackOfResources",
+            "preventive_strategies": [
+              "PS-029_ResourceAvailabilityPlanning"
+            ],
+            "effects": [
+              "AEF-004_LimitedResourceAccess",
+              "IEF-001_StressManagement",
+              "PME-003_DelaysInTaskDelivery"
+            ],
+            "corrective_strategies": [
+              "CS-028_TaskDeliveryRecoveryPlan",
+              "STR-007_ResourceInventoryReview",
+              "STR-008_ThirdPartyResourceSupport",
+              "STR-I-001_StressManagementWorkshops",
+              "STR-I-002_MindfulnessTraining"
+            ],
+            "indicators": [
+              "IND-005_Team_Engagement_Rate"
+            ],
+            "metrics": [
+              "MTR-002_Feedback_Loop_Frequency",
+              "MTR-006_Team_Collaboration_Intensity"
+            ],
+            "risks": [
+              "RSK-004_Limited_Resource_Access_Risk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Truck Factor"
+            ]
+          },
+          {
+            "cause_id": "CA-013",
+            "cause_name": "Inefficient or inadequate tools",
+            "similarity": 0.14207907021045685,
+            "ontology_id": "CA-013_InefficientOrInadequateTools",
+            "preventive_strategies": [
+              "PS-026_ToolingReadinessReview"
+            ],
+            "effects": [
+              "PME-022_ToolingConstraint"
+            ],
+            "corrective_strategies": [
+              "CS-026_ImproveToolingSupport"
+            ],
+            "indicators": [
+              "IND-026_ToolingLimitationMentions"
+            ],
+            "metrics": [
+              "MTR-026_ToolingLimitationFrequency"
+            ],
+            "risks": [
+              "RSK-026_ToolingRisk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Socio-Technical Congruence Gap"
+            ]
+          },
+          {
+            "cause_id": "CA-012",
+            "cause_name": "Repository access limitation",
+            "similarity": 0.13033486902713776,
+            "ontology_id": "CA-012_RepositoryAccessLimitation",
+            "preventive_strategies": [
+              "PS-025_AccessPlanning"
+            ],
+            "effects": [
+              "PME-021_BlockedProgressDueToAccessLimitation"
+            ],
+            "corrective_strategies": [
+              "CS-025_RequestRepositoryAccess"
+            ],
+            "indicators": [
+              "IND-025_AccessDependencyMentions"
+            ],
+            "metrics": [
+              "MTR-025_AccessDependencyFrequency"
+            ],
+            "risks": [
+              "RSK-025_AccessBottleneckRisk"
+            ],
+            "community_smells": [
+              "Missing Link",
+              "Organizational Silo"
+            ]
+          }
+        ]
+      },
+      {
+        "issue_number": 101,
+        "comment": "I don't understand how this component works, the documentation is completely missing.",
+        "original_text": "I don't understand how this component works, the documentation is completely missing.",
+        "cleaned_text": "I don't understand how this component works, the documentation is completely missing.",
+        "noise_level": "useful",
+        "is_noise": false,
+        "macro_cause_code": "F",
+        "confidence": 0.9,
+        "rule_applied": "F_documentation_evidence_confirmed",
+        "microcauses": [
+          {
+            "cause_id": "COG-009",
+            "cause_name": "Lack of technical documentation",
+            "similarity": 0.14621897041797638,
+            "ontology_id": "COG-009_LackOfTechnicalDocumentation",
+            "preventive_strategies": [
+              "PS-027_TechnicalDocumentationPractices"
+            ],
+            "effects": [
+              "GEF-003_DifficultyInKnowledgeSharing",
+              "TEF-012_DifficultyUnderstandingSystemBehavior"
+            ],
+            "corrective_strategies": [
+              "STR-G-005_SharedKnowledgeSessions",
+              "STR-G-006_PeerMentoring"
+            ],
+            "indicators": [
+              "IND-013_DocumentationCompleteness"
+            ],
+            "metrics": [
+              "MTR-013_DocumentationCoverage"
+            ],
+            "risks": [
+              "RSK-011_KnowledgeLossRisk",
+              "RSK-013_TechnicalMaintenanceRisk"
+            ],
+            "community_smells": [
+              "Knowledge Silos",
+              "Truck Factor"
+            ]
+          },
+          {
+            "cause_id": "CA-004",
+            "cause_name": "No Knowledge Transfer Policy in Communication Activities",
+            "similarity": 0.0773981511592865,
+            "ontology_id": "CA-004_NoKnowledgeTransferPolicy",
+            "preventive_strategies": [
+              "PS-001_StandardizedTaskHandoverProcess",
+              "PS-006_DocumentedTaskHandoverChecklist",
+              "PS-007_HandoverRoleAssignment"
+            ],
+            "effects": [
+              "AEF-005_FrequentLeadershipConflicts"
+            ],
+            "corrective_strategies": [
+              "STR-009_LeadershipConflictMediation",
+              "STR-010_LeadershipDevelopmentProgram"
+            ],
+            "indicators": [
+              "IND-003_Knowledge_Sharing_Level"
+            ],
+            "metrics": [
+              "MTR-001_Knowledge_Transfer_Efficiency"
+            ],
+            "risks": [
+              "RSK-001_Knowledge_Loss_Risk"
+            ],
+            "community_smells": [
+              "Power Distance"
+            ]
+          },
+          {
+            "cause_id": "ADM-003",
+            "cause_name": "Lack of standards or best practices",
+            "similarity": 0.04518342390656471,
+            "ontology_id": "ADM-003_LackOfStandardsOrBestPractices",
+            "preventive_strategies": [
+              "PS-023_DefineDocumentationAndReviewStandards"
+            ],
+            "effects": [
+              "AEF-020_InconsistentDocumentationPractices"
+            ],
+            "corrective_strategies": [
+              "CS-023_UpdateStandardsAndDocs"
+            ],
+            "indicators": [
+              "IND-023_DocumentationStandardMentions"
+            ],
+            "metrics": [
+              "MTR-023_DocumentationStandardCompliance"
+            ],
+            "risks": [
+              "RSK-023_KnowledgeFragmentationRisk"
+            ],
+            "community_smells": [
+              "Missing Link",
+              "Organizational Silo"
+            ]
+          }
+        ]
+      },
+      {
+        "issue_number": 101,
+        "comment": "We are blocked waiting for the architecture team to approve the security review ticket.",
+        "original_text": "We are blocked waiting for the architecture team to approve the security review ticket.",
+        "cleaned_text": "We are blocked waiting for the architecture team to approve the security review ticket.",
+        "noise_level": "useful",
+        "is_noise": false,
+        "macro_cause_code": "D",
+        "confidence": 0.9,
+        "rule_applied": "none_llm_kept",
+        "microcauses": [
+          {
+            "cause_id": "CA-005",
+            "cause_name": "Blockage due to approval requirements",
+            "similarity": 0.4757375121116638,
+            "ontology_id": "CA-005_BlockageDueToApprovalRequirements",
+            "preventive_strategies": [
+              "PS-026_ApprovalWorkflowPredefinition"
+            ],
+            "effects": [
+              "AEF-006_InefficientTaskAssignment",
+              "PME-003_DelaysInTaskDelivery"
+            ],
+            "corrective_strategies": [
+              "CS-028_TaskDeliveryRecoveryPlan",
+              "STR-011_TaskAssignmentReview",
+              "STR-012_DelegationTraining"
+            ],
+            "indicators": [
+              "IND-002_Feedback_Latency_Score"
+            ],
+            "metrics": [
+              "MTR-002_Feedback_Loop_Frequency",
+              "MTR-002_Feedback_Response_Time"
+            ],
+            "risks": [
+              "RSK-003_Feedback_Delays_Risk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Power Distance"
+            ]
+          },
+          {
+            "cause_id": "CA-010",
+            "cause_name": "Blockage due to triage process",
+            "similarity": 0.47036629915237427,
+            "ontology_id": "CA-010_BlockageDueToTriageProcess",
+            "preventive_strategies": [
+              "PS-001_StandardizedTaskHandoverProcess"
+            ],
+            "effects": [
+              "PME-003_DelaysInTaskDelivery"
+            ],
+            "corrective_strategies": [
+              "CS-028_TaskDeliveryRecoveryPlan"
+            ],
+            "indicators": [
+              "IND-001_Communication_Breakdown_Index"
+            ],
+            "metrics": [
+              "MTR-002_Feedback_Response_Time"
+            ],
+            "risks": [
+              "RSK-002_Feedback_Delays_Risk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Power Distance"
+            ]
+          },
+          {
+            "cause_id": "CA-009",
+            "cause_name": "Constraint due to ticket status for review",
+            "similarity": 0.3273153007030487,
+            "ontology_id": "CA-009_ConstraintDueToTicketStatusForReview",
+            "preventive_strategies": [
+              "PS-001_StandardizedTaskHandoverProcess"
+            ],
+            "effects": [
+              "PME-003_DelaysInTaskDelivery"
+            ],
+            "corrective_strategies": [
+              "CS-028_TaskDeliveryRecoveryPlan"
+            ],
+            "indicators": [
+              "IND-002_Feedback_Latency_Score"
+            ],
+            "metrics": [
+              "MTR-002_Feedback_Response_Time"
+            ],
+            "risks": [
+              "RSK-002_Feedback_Delays_Risk"
+            ],
+            "community_smells": [
+              "Power Distance"
+            ]
+          }
+        ]
+      },
+      {
+        "issue_number": 101,
+        "comment": "There is a severe miscommunication between the frontend and backend teams regarding this endpoint.",
+        "original_text": "There is a severe miscommunication between the frontend and backend teams regarding this endpoint.",
+        "cleaned_text": "There is a severe miscommunication between the frontend and backend teams regarding this endpoint.",
+        "noise_level": "useful",
+        "is_noise": false,
+        "macro_cause_code": "A",
+        "confidence": 0.9,
+        "rule_applied": "none",
+        "microcauses": [
+          {
+            "cause_id": "CO-005",
+            "cause_name": "Misinterpretation of information",
+            "similarity": 0.40821993350982666,
+            "ontology_id": "CO-005_MisinterpretationOfInformation",
+            "preventive_strategies": [
+              "PS-016_ClearCommunicationGuidelines",
+              "PS-018_InformationClarificationPractice"
+            ],
+            "effects": [
+              "PME-006_MisalignedEfforts",
+              "TEF-002_CommunicationMisunderstandings"
+            ],
+            "corrective_strategies": [
+              "CS-020_RestateAndClarifyMeaning",
+              "CS-029_EffortRealignmentReview",
+              "CS-PM-006_EffortAlignmentRecovery"
+            ],
+            "indicators": [
+              "IND-001_Communication_Breakdown_Index"
+            ],
+            "metrics": [
+              "MTR-003_Communication_Clarity_Index",
+              "MTR-004_Communication_Response_Time"
+            ],
+            "risks": [
+              "RSK-010_MiscommunicationRisk"
+            ],
+            "community_smells": [
+              "Missing Link"
+            ]
+          },
+          {
+            "cause_id": "CO-003",
+            "cause_name": "Unclear or ambiguous communication",
+            "similarity": 0.320961594581604,
+            "ontology_id": "CO-003_UnclearOrAmbiguousCommunication",
+            "preventive_strategies": [
+              "PS-003_TransparentInformationChannels",
+              "PS-016_ClearCommunicationGuidelines",
+              "PS-018_InformationClarificationPractice",
+              "PS-020_CommunicationClarificationProtocol"
+            ],
+            "effects": [
+              "PME-003_DelaysInTaskDelivery",
+              "TEF-002_CommunicationMisunderstandings",
+              "TEF-020_SharedUnderstandingBreakdown"
+            ],
+            "corrective_strategies": [
+              "CS-020_RestateAndClarifyMeaning",
+              "CS-020_SharedUnderstandingRecovery",
+              "CS-028_TaskDeliveryRecoveryPlan"
+            ],
+            "indicators": [
+              "IND-010_CommunicationClarityLevel",
+              "IND-020_ClarificationRequestFrequency"
+            ],
+            "metrics": [
+              "MTR-010_ClarityScore",
+              "MTR-020_ClarificationRequestRate"
+            ],
+            "risks": [
+              "RSK-010_MiscommunicationRisk",
+              "RSK-020_MisinterpretationRisk"
+            ],
+            "community_smells": [
+              "Missing Link",
+              "Power Distance"
+            ]
+          },
+          {
+            "cause_id": "CO-002",
+            "cause_name": "Delayed Communication",
+            "similarity": 0.30360686779022217,
+            "ontology_id": "CO-002_DelayedCommunication",
+            "preventive_strategies": [
+              "PS-017_TimelyFeedbackMechanism",
+              "PS-104_CommunicationProtocols",
+              "PS-105_RegularSyncMeetings",
+              "PS-106_ResponseTimePolicies"
+            ],
+            "effects": [
+              "GEF-002_LowMotivation",
+              "TEF-002_CommunicationMisunderstandings"
+            ],
+            "corrective_strategies": [
+              "CS-020_RestateAndClarifyMeaning",
+              "STR-G-003_TeamRecognitionPrograms",
+              "STR-G-004_EngagementActivities"
+            ],
+            "indicators": [
+              "IND-002_Feedback_Latency_Score"
+            ],
+            "metrics": [
+              "MTR-004_Language_Barrier_Impact"
+            ],
+            "risks": [
+              "RSK-002_Feedback_Delays_Risk"
+            ],
+            "community_smells": [
+              "Power Distance"
+            ]
+          }
+        ]
+      },
+      {
+        "issue_number": 101,
+        "comment": "Our team lacks the necessary budget to scale the infrastructure properly.",
+        "original_text": "Our team lacks the necessary budget to scale the infrastructure properly.",
+        "cleaned_text": "Our team lacks the necessary budget to scale the infrastructure properly.",
+        "noise_level": "useful",
+        "is_noise": false,
+        "macro_cause_code": "G",
+        "confidence": 0.9,
+        "rule_applied": "none",
+        "microcauses": [
+          {
+            "cause_id": "CA-008",
+            "cause_name": "Lack of resources (time, people, budget)",
+            "similarity": 0.5005072355270386,
+            "ontology_id": "CA-008_LackOfResources",
+            "preventive_strategies": [
+              "PS-029_ResourceAvailabilityPlanning"
+            ],
+            "effects": [
+              "AEF-004_LimitedResourceAccess",
+              "IEF-001_StressManagement",
+              "PME-003_DelaysInTaskDelivery"
+            ],
+            "corrective_strategies": [
+              "CS-028_TaskDeliveryRecoveryPlan",
+              "STR-007_ResourceInventoryReview",
+              "STR-008_ThirdPartyResourceSupport",
+              "STR-I-001_StressManagementWorkshops",
+              "STR-I-002_MindfulnessTraining"
+            ],
+            "indicators": [
+              "IND-005_Team_Engagement_Rate"
+            ],
+            "metrics": [
+              "MTR-002_Feedback_Loop_Frequency",
+              "MTR-006_Team_Collaboration_Intensity"
+            ],
+            "risks": [
+              "RSK-004_Limited_Resource_Access_Risk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Truck Factor"
+            ]
+          },
+          {
+            "cause_id": "CA-013",
+            "cause_name": "Inefficient or inadequate tools",
+            "similarity": 0.38073599338531494,
+            "ontology_id": "CA-013_InefficientOrInadequateTools",
+            "preventive_strategies": [
+              "PS-026_ToolingReadinessReview"
+            ],
+            "effects": [
+              "PME-022_ToolingConstraint"
+            ],
+            "corrective_strategies": [
+              "CS-026_ImproveToolingSupport"
+            ],
+            "indicators": [
+              "IND-026_ToolingLimitationMentions"
+            ],
+            "metrics": [
+              "MTR-026_ToolingLimitationFrequency"
+            ],
+            "risks": [
+              "RSK-026_ToolingRisk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Socio-Technical Congruence Gap"
+            ]
+          },
+          {
+            "cause_id": "CA-012",
+            "cause_name": "Repository access limitation",
+            "similarity": 0.12930011749267578,
+            "ontology_id": "CA-012_RepositoryAccessLimitation",
+            "preventive_strategies": [
+              "PS-025_AccessPlanning"
+            ],
+            "effects": [
+              "PME-021_BlockedProgressDueToAccessLimitation"
+            ],
+            "corrective_strategies": [
+              "CS-025_RequestRepositoryAccess"
+            ],
+            "indicators": [
+              "IND-025_AccessDependencyMentions"
+            ],
+            "metrics": [
+              "MTR-025_AccessDependencyFrequency"
+            ],
+            "risks": [
+              "RSK-025_AccessBottleneckRisk"
+            ],
+            "community_smells": [
+              "Missing Link",
+              "Organizational Silo"
+            ]
+          }
+        ]
+      },
+      {
+        "issue_number": 101,
+        "comment": "The current process for approving these merges is taking way too long and causing bottlenecks.",
+        "original_text": "The current process for approving these merges is taking way too long and causing bottlenecks.",
+        "cleaned_text": "The current process for approving these merges is taking way too long and causing bottlenecks.",
+        "noise_level": "useful",
+        "is_noise": false,
+        "macro_cause_code": "D",
+        "confidence": 0.9,
+        "rule_applied": "none",
+        "microcauses": [
+          {
+            "cause_id": "CA-005",
+            "cause_name": "Blockage due to approval requirements",
+            "similarity": 0.30873310565948486,
+            "ontology_id": "CA-005_BlockageDueToApprovalRequirements",
+            "preventive_strategies": [
+              "PS-026_ApprovalWorkflowPredefinition"
+            ],
+            "effects": [
+              "AEF-006_InefficientTaskAssignment",
+              "PME-003_DelaysInTaskDelivery"
+            ],
+            "corrective_strategies": [
+              "CS-028_TaskDeliveryRecoveryPlan",
+              "STR-011_TaskAssignmentReview",
+              "STR-012_DelegationTraining"
+            ],
+            "indicators": [
+              "IND-002_Feedback_Latency_Score"
+            ],
+            "metrics": [
+              "MTR-002_Feedback_Loop_Frequency",
+              "MTR-002_Feedback_Response_Time"
+            ],
+            "risks": [
+              "RSK-003_Feedback_Delays_Risk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Power Distance"
+            ]
+          },
+          {
+            "cause_id": "CA-007",
+            "cause_name": "Inefficient organizational processes",
+            "similarity": 0.25140273571014404,
+            "ontology_id": "CA-007_InefficientOrganizationalProcesses",
+            "preventive_strategies": [
+              "PS-027_ProcessStandardizationGuidelines"
+            ],
+            "effects": [
+              "AEF-002_InefficientStructure",
+              "PME-004_InefficientUseOfResources"
+            ],
+            "corrective_strategies": [
+              "STR-003_RestructureTeams",
+              "STR-004_ProcessOptimization"
+            ],
+            "indicators": [
+              "IND-004_Responsibility_Overlap_Index"
+            ],
+            "metrics": [
+              "MTR-005_Task_Assignment_Clarity_Score"
+            ],
+            "risks": [
+              "RSK-003_Collaboration_Breakdown_Risk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Shared Villainy"
+            ]
+          },
+          {
+            "cause_id": "CA-009",
+            "cause_name": "Constraint due to ticket status for review",
+            "similarity": 0.20030096173286438,
+            "ontology_id": "CA-009_ConstraintDueToTicketStatusForReview",
+            "preventive_strategies": [
+              "PS-001_StandardizedTaskHandoverProcess"
+            ],
+            "effects": [
+              "PME-003_DelaysInTaskDelivery"
+            ],
+            "corrective_strategies": [
+              "CS-028_TaskDeliveryRecoveryPlan"
+            ],
+            "indicators": [
+              "IND-002_Feedback_Latency_Score"
+            ],
+            "metrics": [
+              "MTR-002_Feedback_Response_Time"
+            ],
+            "risks": [
+              "RSK-002_Feedback_Delays_Risk"
+            ],
+            "community_smells": [
+              "Power Distance"
+            ]
+          }
+        ]
+      },
+      {
+        "issue_number": 101,
+        "comment": "Thank you for this PR! Code looks good, did you run the perf dash to check it works as intended?",
+        "original_text": "Thank you for this PR! Code looks good, did you run the perf dash to check it works as intended?",
+        "cleaned_text": "Thank you for this PR! Code looks good, did you run the perf dash to check it works as intended?",
+        "noise_level": "useful",
+        "is_noise": false,
+        "macro_cause_code": "G",
+        "confidence": 0.9,
+        "rule_applied": "G_validation_tooling_evidence_confirmed",
+        "microcauses": [
+          {
+            "cause_id": "CA-008",
+            "cause_name": "Lack of resources (time, people, budget)",
+            "similarity": 0.09415122866630554,
+            "ontology_id": "CA-008_LackOfResources",
+            "preventive_strategies": [
+              "PS-029_ResourceAvailabilityPlanning"
+            ],
+            "effects": [
+              "AEF-004_LimitedResourceAccess",
+              "IEF-001_StressManagement",
+              "PME-003_DelaysInTaskDelivery"
+            ],
+            "corrective_strategies": [
+              "CS-028_TaskDeliveryRecoveryPlan",
+              "STR-007_ResourceInventoryReview",
+              "STR-008_ThirdPartyResourceSupport",
+              "STR-I-001_StressManagementWorkshops",
+              "STR-I-002_MindfulnessTraining"
+            ],
+            "indicators": [
+              "IND-005_Team_Engagement_Rate"
+            ],
+            "metrics": [
+              "MTR-002_Feedback_Loop_Frequency",
+              "MTR-006_Team_Collaboration_Intensity"
+            ],
+            "risks": [
+              "RSK-004_Limited_Resource_Access_Risk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Truck Factor"
+            ]
+          },
+          {
+            "cause_id": "CA-011",
+            "cause_name": "Request for Technical Validation Support",
+            "similarity": 0.0764460414648056,
+            "ontology_id": "CA-011_RequestForTechnicalValidationSupport",
+            "preventive_strategies": [
+              "PS-024_PreplanValidationOwnership"
+            ],
+            "effects": [
+              "PME-020_BlockedProgressDueToValidationDependency"
+            ],
+            "corrective_strategies": [
+              "CS-024_RequestMaintainerValidation"
+            ],
+            "indicators": [
+              "IND-024_ValidationDependencyMentions"
+            ],
+            "metrics": [
+              "MTR-024_ValidationDependencyFrequency"
+            ],
+            "risks": [
+              "RSK-024_ValidationBottleneckRisk"
+            ],
+            "community_smells": [
+              "Missing Link",
+              "Truck Factor"
+            ]
+          },
+          {
+            "cause_id": "CA-013",
+            "cause_name": "Inefficient or inadequate tools",
+            "similarity": 0.06387574970722198,
+            "ontology_id": "CA-013_InefficientOrInadequateTools",
+            "preventive_strategies": [
+              "PS-026_ToolingReadinessReview"
+            ],
+            "effects": [
+              "PME-022_ToolingConstraint"
+            ],
+            "corrective_strategies": [
+              "CS-026_ImproveToolingSupport"
+            ],
+            "indicators": [
+              "IND-026_ToolingLimitationMentions"
+            ],
+            "metrics": [
+              "MTR-026_ToolingLimitationFrequency"
+            ],
+            "risks": [
+              "RSK-026_ToolingRisk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Socio-Technical Congruence Gap"
+            ]
+          }
+        ]
+      },
+      {
+        "issue_number": 101,
+        "comment": "I have noticed that several developers are implementing custom auth logic instead of using the standard library.",
+        "original_text": "I have noticed that several developers are implementing custom auth logic instead of using the standard library.",
+        "cleaned_text": "I have noticed that several developers are implementing custom auth logic instead of using the standard library.",
+        "noise_level": "useful",
+        "is_noise": false,
+        "macro_cause_code": "C",
+        "confidence": 0.85,
+        "rule_applied": "none_llm_kept",
+        "microcauses": [
+          {
+            "cause_id": "COG-010",
+            "cause_name": "Preservation of prior system behavior",
+            "similarity": 0.19408845901489258,
+            "ontology_id": "COG-010_PreservationOfPriorSystemBehavior",
+            "preventive_strategies": [
+              "PS-020_BackwardCompatibilityReview"
+            ],
+            "effects": [
+              "PME-004_InefficientTaskExecution",
+              "TEF-001_TechnicalDebtIncrease"
+            ],
+            "corrective_strategies": [
+              "CS-031_TechnicalDebtRemediation",
+              "CS-032_TaskExecutionImprovement"
+            ],
+            "indicators": [
+              "IND-005_Technical_Alignment_Index"
+            ],
+            "metrics": [
+              "MTR-004_Technical_Consistency_Score"
+            ],
+            "risks": [
+              "RSK-006_Technical_Inconsistency_Risk"
+            ],
+            "community_smells": [
+              "Organizational Silo"
+            ]
+          },
+          {
+            "cause_id": "COG-006",
+            "cause_name": "Lack of Interface Clarification",
+            "similarity": 0.1340184062719345,
+            "ontology_id": "COG-006_LackOfInterfaceClarification",
+            "preventive_strategies": [
+              "PS-004_InterfaceClarificationWorkshops",
+              "PS-012_InterfaceDocumentationGuidelines",
+              "PS-013_CrossComponentReviewBoards",
+              "PS-026_CompatibilityManagement",
+              "PS-027_TechnicalDocumentationPractices"
+            ],
+            "effects": [
+              "IEF-008_ResistanceToChange",
+              "TEF-009_WastedTimeAndResources"
+            ],
+            "corrective_strategies": [
+              "CS-034_ResourceUseCorrection",
+              "STR-I-015_ChangeManagementTraining",
+              "STR-I-016_ChangeChampions"
+            ],
+            "indicators": [
+              "IND-004_Responsibility_Overlap_Index"
+            ],
+            "metrics": [
+              "MTR-006_Information_Disconnect_Index"
+            ],
+            "risks": [
+              "RSK-005_Documentation_Gaps_Risk"
+            ],
+            "community_smells": [
+              "Missing Link"
+            ]
+          },
+          {
+            "cause_id": "COG-008",
+            "cause_name": "Compatibility Constraints",
+            "similarity": 0.12484904378652573,
+            "ontology_id": "COG-008_CompatibilityConstraints",
+            "preventive_strategies": [
+              "PS-021_CompatibilityImpactAnalysis",
+              "PS-026_CompatibilityManagement"
+            ],
+            "effects": [
+              "TEF-011_CompatibilityProblems",
+              "TEF-021_CompatibilityFailure"
+            ],
+            "corrective_strategies": [
+              "CS-021_TargetedCompatibilityValidation"
+            ],
+            "indicators": [
+              "IND-021_CompatibilityMentions"
+            ],
+            "metrics": [
+              "MTR-021_CompatibilityIssueFrequency"
+            ],
+            "risks": [
+              "RSK-013_TechnicalMaintenanceRisk",
+              "RSK-021_BackwardCompatibilityRisk"
+            ],
+            "community_smells": [
+              "Socio-Technical Congruence Gap"
+            ]
+          }
+        ]
+      },
+      {
+        "issue_number": 101,
+        "comment": "Can someone please explain why this test is flaky on the CI environment but works locally?",
+        "original_text": "Can someone please explain why this test is flaky on the CI environment but works locally?",
+        "cleaned_text": "Can someone please explain why this test is flaky on the CI environment but works locally?",
+        "noise_level": "useful",
+        "is_noise": false,
+        "macro_cause_code": "G",
+        "confidence": 0.9,
+        "rule_applied": "G_validation_tooling_evidence_confirmed",
+        "microcauses": [
+          {
+            "cause_id": "CA-013",
+            "cause_name": "Inefficient or inadequate tools",
+            "similarity": 0.27619847655296326,
+            "ontology_id": "CA-013_InefficientOrInadequateTools",
+            "preventive_strategies": [
+              "PS-026_ToolingReadinessReview"
+            ],
+            "effects": [
+              "PME-022_ToolingConstraint"
+            ],
+            "corrective_strategies": [
+              "CS-026_ImproveToolingSupport"
+            ],
+            "indicators": [
+              "IND-026_ToolingLimitationMentions"
+            ],
+            "metrics": [
+              "MTR-026_ToolingLimitationFrequency"
+            ],
+            "risks": [
+              "RSK-026_ToolingRisk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Socio-Technical Congruence Gap"
+            ]
+          },
+          {
+            "cause_id": "CA-011",
+            "cause_name": "Request for Technical Validation Support",
+            "similarity": 0.2235366851091385,
+            "ontology_id": "CA-011_RequestForTechnicalValidationSupport",
+            "preventive_strategies": [
+              "PS-024_PreplanValidationOwnership"
+            ],
+            "effects": [
+              "PME-020_BlockedProgressDueToValidationDependency"
+            ],
+            "corrective_strategies": [
+              "CS-024_RequestMaintainerValidation"
+            ],
+            "indicators": [
+              "IND-024_ValidationDependencyMentions"
+            ],
+            "metrics": [
+              "MTR-024_ValidationDependencyFrequency"
+            ],
+            "risks": [
+              "RSK-024_ValidationBottleneckRisk"
+            ],
+            "community_smells": [
+              "Missing Link",
+              "Truck Factor"
+            ]
+          },
+          {
+            "cause_id": "CA-008",
+            "cause_name": "Lack of resources (time, people, budget)",
+            "similarity": 0.20539513230323792,
+            "ontology_id": "CA-008_LackOfResources",
+            "preventive_strategies": [
+              "PS-029_ResourceAvailabilityPlanning"
+            ],
+            "effects": [
+              "AEF-004_LimitedResourceAccess",
+              "IEF-001_StressManagement",
+              "PME-003_DelaysInTaskDelivery"
+            ],
+            "corrective_strategies": [
+              "CS-028_TaskDeliveryRecoveryPlan",
+              "STR-007_ResourceInventoryReview",
+              "STR-008_ThirdPartyResourceSupport",
+              "STR-I-001_StressManagementWorkshops",
+              "STR-I-002_MindfulnessTraining"
+            ],
+            "indicators": [
+              "IND-005_Team_Engagement_Rate"
+            ],
+            "metrics": [
+              "MTR-002_Feedback_Loop_Frequency",
+              "MTR-006_Team_Collaboration_Intensity"
+            ],
+            "risks": [
+              "RSK-004_Limited_Resource_Access_Risk"
+            ],
+            "community_smells": [
+              "Organizational Silo",
+              "Truck Factor"
+            ]
+          }
+        ]
+      }
+    ],
+    "issues_metrics": {
+      "101": {
+        "sdi_score": 0.5073,
+        "sdi_status": "Medium",
+        "macro_diversity": 1.961,
+        "normalized_diversity": 0.6985,
+        "total_comments": 10,
+        "valid_comments": 10,
+        "noise_ratio": 0.0
+      }
+    }
+  }
+}
