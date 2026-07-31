@@ -2,7 +2,7 @@ import asyncio
 import pandas as pd
 import httpx
 import time
-from app.main import app
+import psutil
 from app.core.config import settings
 
 async def run_issue_metrics_test():
@@ -29,7 +29,7 @@ async def run_issue_metrics_test():
     print("-" * 50)
     
     # 2. Enviar el archivo a la API (End-to-End Test)
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+    async with httpx.AsyncClient(base_url="http://127.0.0.1:8000") as client:
         start_time_total = time.time()
         
         with open(csv_filename, "rb") as f:
@@ -44,6 +44,28 @@ async def run_issue_metrics_test():
         job_id = data["job_id"]
         print(f"Archivo subido exitosamente. Job ID: {job_id}")
         
+        
+        # Tarea de fondo para monitorear CPU y RAM máxima
+        max_cpu = 0.0
+        max_ram_mb = 0.0
+        max_system_ram_percent = 0.0
+        
+        async def monitor_resources():
+            nonlocal max_cpu, max_ram_mb, max_system_ram_percent
+            psutil.cpu_percent(interval=None)
+            while True:
+                cpu = psutil.cpu_percent(interval=None)
+                ram_mb = psutil.Process().memory_info().rss / (1024 * 1024)
+                sys_ram = psutil.virtual_memory().percent
+                
+                if cpu > max_cpu: max_cpu = cpu
+                if ram_mb > max_ram_mb: max_ram_mb = ram_mb
+                if sys_ram > max_system_ram_percent: max_system_ram_percent = sys_ram
+                
+                await asyncio.sleep(0.5)
+                
+        monitor_task = asyncio.create_task(monitor_resources())
+        
         # 3. Polling: Consultar el estado cada segundo hasta que termine
         while True:
             res = await client.get(f"{settings.API_V1_STR}/classify/batch/{job_id}")
@@ -57,6 +79,8 @@ async def run_issue_metrics_test():
                 break
                 
             await asyncio.sleep(1) # Esperar 1 segundo antes de volver a preguntar
+            
+        monitor_task.cancel()
             
         end_time_total = time.time()
         total_time = end_time_total - start_time_total
@@ -104,6 +128,8 @@ async def run_issue_metrics_test():
         print(f"Estimación para 1,000 comentarios: {(avg_time * 1000) / 60:.2f} minutos")
         print(f"Estimación para 2,000 comentarios: {(avg_time * 2000) / 60:.2f} minutos")
         print(f"Estimación para 3,000 comentarios: {(avg_time * 3000) / 60:.2f} minutos")
+        print(f"Estimación para 4,000 comentarios: {(avg_time * 4000) / 60:.2f} minutos")
+        print(f"Consumo Máximo Detectado: CPU {max_cpu}% | RAM del proceso de prueba: {max_ram_mb:.1f} MB | RAM de TODO el servidor: {max_system_ram_percent}%")
         print("=" * 50 + "\n")
 
 if __name__ == "__main__":
