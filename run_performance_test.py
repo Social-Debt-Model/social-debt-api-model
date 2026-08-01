@@ -39,8 +39,37 @@ async def run_reduced_dataset_test():
     print(f"Iniciando prueba de rendimiento con el archivo: {csv_filename}...\n")
     print("-" * 50)
     
-    # Enviar el archivo a la API (End-to-End Test)
+    # Pre-flight check: Validar saldo de OpenAI
+    required_requests = { "1": 1000, "2": 2593, "3": 7780 }.get(opcion, 1000)
+    
     async with httpx.AsyncClient(base_url=api_url, timeout=60.0) as client:
+        print("Comprobando límites de OpenAI en el servidor...")
+        try:
+            limit_res = await client.get(f"{settings.API_V1_STR}/system/openai-limits")
+            if limit_res.status_code == 200:
+                limit_data = limit_res.json()
+                if limit_data.get("status") == "success" or limit_data.get("status") == "rate_limit_exceeded":
+                    remaining = int(limit_data.get("limits", {}).get("remaining_requests", 0))
+                    print(f"Límite disponible actual: {remaining} peticiones (requests)")
+                    if remaining < required_requests:
+                        reset_time = limit_data.get("limits", {}).get("reset_requests", "desconocido")
+                        print("\n" + "!" * 50)
+                        print(f"¡ADVERTENCIA! No tienes suficientes peticiones para este dataset.")
+                        print(f"Necesitas: {required_requests}")
+                        print(f"Disponibles: {remaining}")
+                        print(f"Tiempo para reinicio: {reset_time}")
+                        print("!" * 50)
+                        print("\nEl proceso ha sido cancelado para evitar errores 429 a la mitad de la carga.")
+                        return
+                    else:
+                        print("¡Tienes peticiones suficientes! Procediendo con la prueba...\n")
+                else:
+                    print("No se pudo parsear los límites, continuando de todos modos...")
+            else:
+                print(f"Advertencia: El endpoint de límites devolvió {limit_res.status_code}")
+        except Exception as e:
+            print(f"Advertencia: Falló la comprobación de límites ({e}). Continuando...")
+            
         start_time_total = time.time()
         
         try:
