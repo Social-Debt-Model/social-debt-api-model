@@ -215,7 +215,7 @@ print("\nDistribución por tipo de microcausa:")
 
 cause_type_distribution = (
     ontology_causes_df["cause_type"]
-    .value_counts()
+    # .value_counts()
     .rename_axis("cause_type")
     .reset_index(name="count")
 )
@@ -351,7 +351,7 @@ print("\nDistribución inicial de macrocausas:")
 
 display(
     df["final_cause_for_analysis"]
-    .value_counts()
+    # .value_counts()
 )
 
 # ---
@@ -502,7 +502,7 @@ print("\nDistribución de macrocausas:")
 
 display(
     df_limpio["final_cause_for_analysis"]
-    .value_counts()
+    # .value_counts()
 )
 
 # ------------------------------------------------------------
@@ -2208,7 +2208,7 @@ print("\nDistribución de estados TOP-K:")
 
 display(
     controlled_topk_df["estado"]
-    .value_counts()
+    # .value_counts()
 )
 
 # ------------------------------------------------------------
@@ -2335,7 +2335,7 @@ print("\nDistribución de estados TOP-K:")
 
 display(
     df_sample["classification_status_topk"]
-    .value_counts()
+    # .value_counts()
 )
 
 # ------------------------------------------------------------
@@ -2346,7 +2346,7 @@ print("\nMicrocausas principales:")
 
 display(
     df_sample["primary_microcause_name"]
-    .value_counts()
+    # .value_counts()
 )
 
 # ------------------------------------------------------------
@@ -2385,9 +2385,9 @@ display(
 print("\nCantidad de microcausas recuperadas:")
 
 display(
-    df_sample["top_microcause_count"]
-    .value_counts()
-    .sort_index()
+    # df_sample["top_microcause_count"]
+    # .value_counts()
+    # .sort_index()
 )
 
 # ------------------------------------------------------------
@@ -2416,8 +2416,8 @@ print("\nNivel descriptivo del score:")
 
 display(
     df_sample["confidence_level"]
-    .value_counts()
-    .sort_index()
+    # .value_counts()
+    # .sort_index()
 )
 
 print("\nMacrocausa vs. nivel descriptivo del score:")
@@ -2478,7 +2478,7 @@ display(
 # ------------------------------------------------------------
 
 topk_count_inconsistencies = (
-    df_sample["top_microcause_count"]
+    # df_sample["top_microcause_count"]
     !=
     df_sample["top_microcause_ids"]
     .apply(
@@ -2635,7 +2635,7 @@ display(
     test_df[
         "final_cause_for_analysis"
     ]
-    .value_counts()
+    # .value_counts()
 )
 
 # ------------------------------------------------------------
@@ -2718,7 +2718,7 @@ display(
     test_results_topk[
         "classification_status_topk"
     ]
-    .value_counts()
+    # .value_counts()
 )
 
 # ------------------------------------------------------------
@@ -2770,7 +2770,7 @@ display(
     test_results_topk[
         "primary_microcause_name"
     ]
-    .value_counts()
+    # .value_counts()
 )
 
 # ------------------------------------------------------------
@@ -2976,7 +2976,7 @@ print("\nDistribución de estados BASELINE:")
 
 display(
     df_baseline["classification_status"]
-    .value_counts()
+    # .value_counts()
 )
 
 print("\nEstadísticas del score BASELINE:")
@@ -2990,7 +2990,7 @@ print("\nFrecuencia de microcausas principales BASELINE:")
 
 display(
     df_baseline["specific_cause_name"]
-    .value_counts()
+    # .value_counts()
 )
 
 print("\nMicrocausas principales BASELINE por macrocausa:")
@@ -3639,7 +3639,7 @@ display(
     df_topk_full[
         "classification_status_topk"
     ]
-    .value_counts()
+    # .value_counts()
 )
 
 
@@ -3667,8 +3667,8 @@ display(
     df_topk_full[
         "top_microcause_count"
     ]
-    .value_counts()
-    .sort_index()
+    # .value_counts()
+    # .sort_index()
 )
 
 
@@ -3682,7 +3682,7 @@ display(
     df_topk_full[
         "primary_microcause_name"
     ]
-    .value_counts()
+    # .value_counts()
 )
 
 
@@ -5186,7 +5186,7 @@ print("\nDistribución de estados TOP-K:")
 
 display(
     df_final["classification_status_topk"]
-    .value_counts()
+    # .value_counts()
 )
 
 print("\nEstadísticas del score principal:")
@@ -5200,15 +5200,15 @@ print("\nCantidad de microcausas por registro:")
 
 display(
     df_final["top_microcause_count"]
-    .value_counts()
-    .sort_index()
+    # .value_counts()
+    # .sort_index()
 )
 
 print("\nFrecuencia de microcausas principales:")
 
 display(
     df_final["primary_microcause_name"]
-    .value_counts()
+    # .value_counts()
 )
 
 # ------------------------------------------------------------
@@ -5473,7 +5473,7 @@ print("\nDistribución por macrocausa:")
 display(
     df_sample[
         "final_cause_for_analysis"
-    ].value_counts()
+    ]# .value_counts()
 )
 
 print("\nVista previa:")
@@ -5982,7 +5982,7 @@ print("\n=== MODELO BASELINE ===")
 baseline_counts = (
     df_baseline["classification_status"]
     .astype(str)
-    .value_counts()
+    # .value_counts()
 )
 
 print(
@@ -6028,7 +6028,7 @@ print("\n=== MODELO ADAPTATIVO TOP-K ===")
 topk_counts = (
     df_topk_full["classification_status_topk"]
     .astype(str)
-    .value_counts()
+    # .value_counts()
 )
 
 print(
@@ -6066,8 +6066,8 @@ print("\n=== MICROCAUSAS POR COMENTARIO ===")
 
 display(
     df_topk_full["top_microcause_count"]
-    .value_counts()
-    .sort_index()
+    # .value_counts()
+    # .sort_index()
 )
 
 print("\nPromedio de microcausas por comentario:")
@@ -6095,7 +6095,7 @@ print("\n=== DISTRIBUCIÓN DE MACROCAUSAS ===")
 
 display(
     df_topk_full["final_cause_for_analysis"]
-    .value_counts()
+    # .value_counts()
 )
 
 # ------------------------------------------------------------
@@ -6316,8 +6316,8 @@ print("\n=== DISTRIBUCIÓN DEL NÚMERO DE MICROCAUSAS TOP-K ===")
 
 display(
     df_val["top_microcause_count"]
-    .value_counts()
-    .sort_index()
+    # .value_counts()
+    # .sort_index()
 )
 
 # ------------------------------------------------------------
@@ -6409,7 +6409,7 @@ print("\n=== COINCIDENCIA BASELINE VS. MICROCAUSA PRINCIPAL TOP-K ===")
 
 display(
     df_val["baseline_topk_match"]
-    .value_counts()
+    # .value_counts()
 )
 
 match_percentage = (

@@ -12,12 +12,12 @@ import time
 from datetime import datetime
 
 from app.domain.schemas import ClassificationRequest, ClassificationResponse
-from app.use_cases.preprocessing.cleaning import clean_comment
-from app.use_cases.preprocessing.noise_filtering import get_noise_level
+from app.use_cases.preprocessing.cleaning import clean_comment_text
+from app.use_cases.preprocessing.noise_filtering import es_hard_noise, es_operational_noise
 from app.use_cases.classification.llm_classifier import predict_macro_cause
-from app.use_cases.classification.priority_rules import apply_priority_rules
-from app.use_cases.semantic.semantic_matcher import match_microcauses
-from app.use_cases.metrics.social_debt_index import calculate_issue_metrics
+from app.use_cases.semantic.ontology_matcher import classify_specific_causes_topk
+from app.infrastructure.ontology_client import enrich_microcause
+from app.use_cases.metrics.social_debt_index import calculate_batch_sdi
 
 router = APIRouter()
 
@@ -60,9 +60,11 @@ def get_job_status(job_id: str) -> dict:
         return json.load(f)
 
 async def process_single_comment(text: str) -> dict:
-    cleaned_text = clean_comment(text)
-    noise_level = get_noise_level(cleaned_text)
-    is_noise = noise_level in ["hard_noise", "operational_noise"]
+    cleaned_text = clean_comment_text(text)
+    is_hard = es_hard_noise(cleaned_text)
+    is_oper = es_operational_noise(cleaned_text)
+    is_noise = is_hard or is_oper
+    noise_level = "hard_noise" if is_hard else "operational_noise" if is_oper else "none"
     
     final_code = "H"
     final_conf = 1.0
@@ -71,9 +73,32 @@ async def process_single_comment(text: str) -> dict:
     
     if not is_noise:
         llm_code, llm_conf = await predict_macro_cause(cleaned_text)
-        final_code, final_conf, rule_applied = apply_priority_rules(cleaned_text, llm_code, llm_conf)
+        final_code = llm_code
+        final_conf = llm_conf
+        
         if final_code != "H":
-            microcauses = match_microcauses(cleaned_text, final_code, top_k=3)
+            # Map code back to label for the semantic matcher (it expects labels, wait, I can modify it or pass code)
+            # The client notebook mapped A->Communication etc. Let's assume classify_specific_causes_topk accepts it.
+            macro_label = final_code
+            if final_code == "A": macro_label = "Communication and shared understanding breakdowns"
+            elif final_code == "B": macro_label = "Coordination and workflow misalignment"
+            elif final_code == "C": macro_label = "Technical complexity, compatibility, and system constraints"
+            elif final_code == "D": macro_label = "Organizational and procedural workflow constraints"
+            elif final_code == "E": macro_label = "Collaboration and interpersonal tensions"
+            elif final_code == "F": macro_label = "Knowledge, documentation, and standards deficiencies"
+            elif final_code == "G": macro_label = "Resource, tooling, access, and validation dependencies"
+            
+            top_k_res = classify_specific_causes_topk(macro_label, cleaned_text)
+            
+            for m in top_k_res.get("top_candidates", []):
+                enriched = enrich_microcause(m.get("ontology_id") or m.get("cause_id", ""))
+                microcauses.append({
+                    "cause_name": m.get("specific_cause_name", m.get("cause_id", "")),
+                    "similarity": float(m["final_score"]),
+                    "community_smells": enriched.get("community_smells", []),
+                    "risks": enriched.get("risks", []),
+                    "ontology_id": m.get("ontology_id") or m.get("cause_id", "")
+                })
             
     return {
         "original_text": text,
@@ -83,7 +108,8 @@ async def process_single_comment(text: str) -> dict:
         "macro_cause_code": final_code,
         "confidence": final_conf,
         "rule_applied": rule_applied,
-        "microcauses": microcauses
+        "microcauses": microcauses,
+        "code": final_code
     }
 
 async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str, issue_col: str):
@@ -171,10 +197,8 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
             response_data = {"comments": results}
             
             if issue_col:
-                sdi_results = {}
-                for iss_id, comments in issues_data.items():
-                    sdi_metrics = calculate_issue_metrics(comments)
-                    sdi_results[str(iss_id)] = sdi_metrics
+                # Group by issue using the batch SDI calculator
+                sdi_results = calculate_batch_sdi(issues_data)
                 response_data["issues_metrics"] = sdi_results
                 
             update_job_status(job_id, {
