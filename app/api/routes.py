@@ -137,7 +137,7 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
             })
             
             # Procesar en lotes (chunks) conservadores de 10 para respetar el Tier 1 (Rate Limits)
-            chunk_size = 10
+            chunk_size = 50
             rows = list(df.iterrows())
             
             for i in range(0, total, chunk_size):
