@@ -6,14 +6,22 @@ from sklearn.preprocessing import MinMaxScaler
 import json
 
 # API imports
+from app.use_cases.preprocessing.cleaning import clean_comment_text
+from app.use_cases.preprocessing.noise_filtering import es_hard_noise, es_operational_noise
 from app.use_cases.classification.llm_classifier import predict_macro_cause
 from app.use_cases.semantic.ontology_matcher import classify_specific_causes_topk
 from app.infrastructure.ontology_client import enrich_microcause
 from app.use_cases.metrics.social_debt_index import calculate_batch_sdi
 
 async def process_comment_notebook(text):
-    macro, _ = await predict_macro_cause(text)
+    cleaned = clean_comment_text(text)
+    is_noise = es_hard_noise(cleaned) or es_operational_noise(cleaned)
+    if is_noise:
+        return {"macro": "H", "microcauses": [], "is_noise": True, "cleaned_text": cleaned}
+        
+    macro, _ = await predict_macro_cause(cleaned)
     microcauses = []
+    
     is_noise = (macro == "H")
     if not is_noise:
         macro_label = macro
@@ -25,7 +33,7 @@ async def process_comment_notebook(text):
         elif macro == "F": macro_label = "Knowledge, documentation, and standards deficiencies"
         elif macro == "G": macro_label = "Resource, tooling, access, and validation dependencies"
         
-        top_k_res = classify_specific_causes_topk(macro_label, text)
+        top_k_res = classify_specific_causes_topk(macro_label, cleaned)
         for m in top_k_res.get("top_candidates", []):
             enriched = enrich_microcause(m.get("ontology_id"))
             microcauses.append({
@@ -34,9 +42,11 @@ async def process_comment_notebook(text):
                 "community_smells": enriched.get("community_smells", []),
                 "risks": enriched.get("risks", [])
             })
-    return {"macro": macro, "microcauses": microcauses, "is_noise": is_noise}
+    return {"macro": macro, "microcauses": microcauses, "is_noise": is_noise, "cleaned_text": cleaned}
 
 async def process_comment_api(text):
+    # Ya verificamos antes que la API usa exactamente las mismas funciones bajo el capó.
+    # Correrlo dos veces nos da la varianza pura de OpenAI.
     return await process_comment_notebook(text)
 
 async def bounded_process(sem, text, func):
@@ -44,52 +54,86 @@ async def bounded_process(sem, text, func):
         return await func(text)
 
 async def run_e2e():
-    print("Cargando dataset...")
-    df = pd.read_excel('Modelo_adaptativo_deuda_social_julio/4. Integracion_semantica/Dataset_salida/Dataset_integration_semantico_original_con_H.xlsx')
-    top_2_issues = [60423, 18056]
-    df_top2 = df[df['issue_number'].isin(top_2_issues)]
+    print("Cargando dataset de 1000 comentarios...")
+    df = pd.read_csv('Modelo_adaptativo_deuda_social_julio/Dataset_original/dataset_test_1000.csv')
     
-    print(f"Procesando {len(df_top2)} comentarios a través de OpenAI (Esto tomará unos minutos)...")
+    print(f"Procesando {len(df)} comentarios a través de OpenAI (Esto tomará unos minutos)...")
     
-    sem = asyncio.Semaphore(5)
+    sem = asyncio.Semaphore(50) # Chunk size de 50
     
-    api_data = {60423: [], 18056: []}
-    notebook_data = {60423: [], 18056: []}
+    api_data = {}
+    notebook_data = {}
     
     tasks_api = []
     tasks_not = []
     
-    for _, row in df_top2.iterrows():
-        text = str(row['comment_body_clean_final'])
+    for _, row in df.iterrows():
+        text = str(row['comment_body_raw'])
         tasks_api.append(bounded_process(sem, text, process_comment_api))
         tasks_not.append(bounded_process(sem, text, process_comment_notebook))
         
-    print("Enviando peticiones asíncronas a OpenAI...")
-    res_api_list = await asyncio.gather(*tasks_api)
-    print("Mitad completada...")
+    print("Enviando peticiones a OpenAI (Notebook logic)...")
     res_not_list = await asyncio.gather(*tasks_not)
+    print("Enviando peticiones a OpenAI (API logic)...")
+    res_api_list = await asyncio.gather(*tasks_api)
     print("Todas las peticiones completadas.")
     
-    for idx, (_, row) in enumerate(df_top2.iterrows()):
-        i_id = row['issue_number']
-        text = str(row['comment_body_clean_final'])
+    # Estructura del reporte
+    report = {
+        "resumen_general": {},
+        "analisis_comentarios": [],
+        "analisis_issues": []
+    }
+    
+    total_macros_iguales = 0
+    total_valid_comments = 0
+    
+    for idx, (_, row) in enumerate(df.iterrows()):
+        i_id = str(row['issue_number'])
+        c_id = str(row.get('comment_id', idx))
+        
+        if i_id not in api_data:
+            api_data[i_id] = []
+            notebook_data[i_id] = []
+            
+        r_api = res_api_list[idx]
+        r_not = res_not_list[idx]
         
         api_data[i_id].append({
-            "code": res_api_list[idx]["macro"],
-            "is_noise": res_api_list[idx]["is_noise"],
-            "cleaned_text": text,
-            "microcauses": res_api_list[idx]["microcauses"]
+            "code": r_api["macro"],
+            "is_noise": r_api["is_noise"],
+            "cleaned_text": r_api["cleaned_text"],
+            "microcauses": r_api["microcauses"]
         })
         
         notebook_data[i_id].append({
-            "code": res_not_list[idx]["macro"],
-            "is_noise": res_not_list[idx]["is_noise"],
-            "cleaned_text": text,
-            "microcauses": res_not_list[idx]["microcauses"]
+            "code": r_not["macro"],
+            "is_noise": r_not["is_noise"],
+            "cleaned_text": r_not["cleaned_text"],
+            "microcauses": r_not["microcauses"]
+        })
+        
+        if not r_api["is_noise"] and not r_not["is_noise"]:
+            total_valid_comments += 1
+            if r_api["macro"] == r_not["macro"]:
+                total_macros_iguales += 1
+                
+        # Guardar en el reporte a nivel comentario
+        report["analisis_comentarios"].append({
+            "issue_id": i_id,
+            "comment_id": c_id,
+            "cleaned_text": r_not["cleaned_text"],
+            "notebook_macro": r_not["macro"],
+            "api_macro": r_api["macro"],
+            "macro_coincide": r_not["macro"] == r_api["macro"],
+            "notebook_microcauses": [m["cause_name"] for m in r_not["microcauses"]],
+            "api_microcauses": [m["cause_name"] for m in r_api["microcauses"]]
         })
 
+    print("\nCalculando métricas SDI (API PIPELINE)...")
     sdi_api_results = calculate_batch_sdi(api_data)
     
+    print("Calculando métricas SDI (NOTEBOOK PIPELINE)...")
     def count_items(x): return len(x) if isinstance(x, list) else 0
     def top_frequency(x): return x[0][1] if isinstance(x, list) and len(x) > 0 else 0
     def top_score(x): return x[0][1] if isinstance(x, list) and len(x) > 0 else 0
@@ -164,31 +208,53 @@ async def run_e2e():
         }
         for k in sdi_features:
             sdi_notebook_results[str(row["issue_number"])][k] = row[k]
-        
-    print("\n================================================")
-    print("=== RESULTADOS COMPARATIVOS E2E (CON OPENAI) ===")
-    print("================================================\n")
+        sdi_notebook_results[str(row["issue_number"])]["dominant_macrocauses"] = row["dominant_macrocauses"]
+        sdi_notebook_results[str(row["issue_number"])]["dominant_microcauses"] = row["dominant_microcauses"]
+
+    # Agregar auditoría nivel Issue
+    diferencias_sdi = []
     
-    for i_id in [str(60423), str(18056)]:
-        print(f"--- ISSUE {i_id} ---")
+    for i_id in sdi_notebook_results.keys():
+        if i_id not in sdi_api_results:
+            continue
         api_res = sdi_api_results[i_id]
         not_res = sdi_notebook_results[i_id]
         
-        print(f"1. ÍNDICE DE DEUDA SOCIAL (SDI):")
-        print(f"   API:      {api_res['social_debt_index']:.6f}")
-        print(f"   Notebook: {not_res['social_debt_index']:.6f}")
-        print(f"   Diferencia Absoluta: {abs(api_res['social_debt_index'] - not_res['social_debt_index']):.6f}")
+        diff = abs(api_res['social_debt_index'] - not_res['social_debt_index'])
+        diferencias_sdi.append(diff)
         
-        print(f"\n2. MÉTRICAS BASE:")
-        print(f"   [API]      Macro Diversity: {api_res['macro_diversity']} | Micro Diversity: {api_res['micro_diversity']} | Smell Diversity: {api_res['smell_diversity']}")
-        print(f"   [Notebook] Macro Diversity: {not_res['macro_diversity']} | Micro Diversity: {not_res['micro_diversity']} | Smell Diversity: {not_res['smell_diversity']}")
+        report["analisis_issues"].append({
+            "issue_id": i_id,
+            "notebook_sdi": not_res['social_debt_index'],
+            "api_sdi": api_res['social_debt_index'],
+            "sdi_diferencia_absoluta": diff,
+            "notebook_top_macros": not_res['dominant_macrocauses'],
+            "api_top_macros": api_res.get('details', {}).get('macro_diversity', []),
+            "notebook_top_micros": not_res['dominant_microcauses'],
+            "api_top_micros": api_res.get('details', {}).get('micro_diversity', [])
+        })
         
-        print(f"\n   [API]      Top Macro Freq: {api_res['top_macro_frequency']} | Top Micro Score: {api_res['top_micro_score']:.2f}")
-        print(f"   [Notebook] Top Macro Freq: {not_res['top_macro_frequency']} | Top Micro Score: {not_res['top_micro_score']:.2f}")
-
-        print(f"\n   [API]      Top Smell Freq: {api_res['top_smell_frequency']} | Top Risk Freq: {api_res['top_risk_frequency']}")
-        print(f"   [Notebook] Top Smell Freq: {not_res['top_smell_frequency']} | Top Risk Freq: {not_res['top_risk_frequency']}")
-        print("------------------------------------------------\n")
+    avg_sdi_diff = sum(diferencias_sdi) / len(diferencias_sdi) if diferencias_sdi else 0
+    macro_match_rate = (total_macros_iguales / total_valid_comments * 100) if total_valid_comments > 0 else 100
+    
+    report["resumen_general"] = {
+        "total_comentarios_procesados": len(df),
+        "total_issues_procesados": len(sdi_notebook_results),
+        "tasa_coincidencia_macrocausas_openai": f"{macro_match_rate:.2f}%",
+        "desviacion_promedio_sdi": f"{avg_sdi_diff:.6f}",
+        "explicacion": "La tasa de coincidencia mide qué tan determinista fue OpenAI al correr el mismo prompt dos veces. La desviación SDI mide cuánto afectó esa varianza al puntaje matemático final."
+    }
+    
+    with open("reporte_varianza_exhaustivo.json", "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
         
+    print("\n================================================")
+    print("=== REPORTE DE VARIANZA EXHAUSTIVO GENERADO  ===")
+    print("================================================\n")
+    print(f"Comentarios procesados: {len(df)}")
+    print(f"Tasa de consistencia OpenAI (Misma Macrocausa 2 veces): {macro_match_rate:.2f}%")
+    print(f"Desviación promedio en Índice SDI final: {avg_sdi_diff:.6f}")
+    print("\nRevisa el archivo 'reporte_varianza_exhaustivo.json' para ver la comparación comentario por comentario.")
+    
 if __name__ == "__main__":
     asyncio.run(run_e2e())
