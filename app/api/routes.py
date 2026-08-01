@@ -88,6 +88,7 @@ async def process_single_comment(text: str) -> dict:
 
 async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str, issue_col: str):
     global active_job_state
+    
     # Usar el bloqueo global para asegurar que solo 1 archivo se procese a la vez
     async with batch_lock:
         try:
@@ -164,9 +165,8 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     "processed": processed
                 })
                 
-                # Freno de mano para no sobrepasar los límites de TPM/RPM de OpenAI (Tier 1)
-                if i + chunk_size < total:
-                    await asyncio.sleep(4)
+                # NOTA: El limitador de tokens dinámico ya gestiona el ritmo 
+                # directamente en la capa de red (llm_client.py) antes de llamar a OpenAI.
                     
             response_data = {"comments": results}
             
@@ -207,17 +207,34 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
     """
     file_bytes = await file.read()
     if file.filename.endswith('.csv'):
-        df = pd.read_csv(io.BytesIO(file_bytes))
+        try:
+            df = pd.read_csv(io.BytesIO(file_bytes))
+            if len(df.columns) == 1:
+                df = pd.read_csv(io.BytesIO(file_bytes), sep=';')
+        except Exception:
+            df = pd.read_csv(io.BytesIO(file_bytes), sep=';')
     elif file.filename.endswith('.xlsx') or file.filename.endswith('.xls'):
         df = pd.read_excel(io.BytesIO(file_bytes))
     else:
         raise HTTPException(status_code=400, detail="Only CSV or Excel files are supported")
         
-    text_col = next((col for col in df.columns if col.lower() in ['comment', 'text', 'body', 'description']), None)
+    # Buscar la columna de texto (coincidencia parcial, evitando ids y metadatos)
+    text_keywords = ['body', 'text', 'content', 'description', 'comment']
+    text_col = None
+    for col in df.columns:
+        c = col.lower()
+        if any(bad in c for bad in ['id', 'author', 'date', 'created', 'url', 'time']):
+            continue
+        if any(kw in c for kw in text_keywords):
+            text_col = col
+            break
+            
     if not text_col:
         raise HTTPException(status_code=400, detail="Could not find a text column")
         
-    issue_col = next((col for col in df.columns if col.lower() in ['issue_number', 'issue', 'ticket', 'issue_id']), None)
+    # Buscar la columna del issue (coincidencia parcial)
+    issue_keywords = ['issue_number', 'issue', 'ticket', 'issue_id']
+    issue_col = next((col for col in df.columns if any(kw in col.lower() for kw in issue_keywords)), None)
     
     # Generar un ID corto, humano y amigable (ej: "A8K9M2")
     job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
@@ -258,5 +275,16 @@ async def get_batch_status(job_id: str):
                 wait_time_str = f"~{est_seconds:.0f} segundos"
             
             job_data["progress"] = f"En cola de espera... (Tiempo estimado para iniciar: {wait_time_str})"
+            
+    # Añadir estimación de tiempo restante si el trabajo está en procesamiento
+    elif job_data.get("status") == "processing" and job_data.get("job_id", job_id) == active_job_state["job_id"]:
+        remaining_comments = active_job_state["total_comments"] - active_job_state["processed_comments"]
+        if remaining_comments > 0:
+            est_seconds = remaining_comments * active_job_state["avg_time_per_comment"]
+            job_data["estimated_remaining_seconds"] = round(est_seconds, 2)
+            if est_seconds > 60:
+                job_data["estimated_remaining_time_formatted"] = f"~{est_seconds/60:.1f} minutos"
+            else:
+                job_data["estimated_remaining_time_formatted"] = f"~{est_seconds:.0f} segundos"
             
     return job_data
