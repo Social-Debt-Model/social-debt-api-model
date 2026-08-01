@@ -4,6 +4,11 @@ import time
 from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
 import json
+import sys
+import os
+
+# Asegurar que Python pueda encontrar la carpeta "app"
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # API imports
 from app.use_cases.preprocessing.cleaning import clean_comment_text
