@@ -22,7 +22,7 @@ async def run_issue_metrics_test():
     df = pd.DataFrame(data)
     
     # Guardar a un CSV temporal
-    csv_filename = "test_issues.csv"
+    csv_filename = "scripts/test_issues.csv"
     df.to_csv(csv_filename, index=False)
     
     print("Iniciando prueba de agrupamiento por Issues (Background Jobs)...\n")
