@@ -18,6 +18,7 @@ from app.use_cases.classification.llm_classifier import predict_macro_cause
 from app.use_cases.semantic.ontology_matcher import classify_specific_causes_topk
 from app.infrastructure.ontology_client import enrich_microcause
 from app.use_cases.metrics.social_debt_index import calculate_batch_sdi
+from app.infrastructure.llm_client import client
 
 router = APIRouter()
 
@@ -312,3 +313,51 @@ async def get_batch_status(job_id: str):
                 job_data["estimated_remaining_time_formatted"] = f"~{est_seconds:.0f} segundos"
             
     return job_data
+
+@router.get("/system/openai-limits")
+async def check_openai_limits():
+    """
+    Realiza un ping a OpenAI para leer los headers de respuesta y 
+    determinar la cuota exacta (Requests y Tokens) disponibles en tiempo real.
+    """
+    try:
+        # Hacemos una petición mínima de 1 token para que devuelva los headers
+        response = await client.chat.completions.with_raw_response.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": "ping"}],
+            max_tokens=1
+        )
+        headers = response.headers
+        
+        return {
+            "status": "success",
+            "model": "gpt-4o-mini",
+            "limits": {
+                "remaining_requests": headers.get("x-ratelimit-remaining-requests"),
+                "limit_requests": headers.get("x-ratelimit-limit-requests"),
+                "reset_requests": headers.get("x-ratelimit-reset-requests"),
+                "remaining_tokens": headers.get("x-ratelimit-remaining-tokens"),
+                "limit_tokens": headers.get("x-ratelimit-limit-tokens"),
+                "reset_tokens": headers.get("x-ratelimit-reset-tokens"),
+            },
+            "message": "Limits fetched successfully."
+        }
+    except Exception as e:
+        # Si ya llegamos al límite, OpenAI arrojará un error 429, pero igual podemos leer los headers del error
+        if hasattr(e, 'response') and e.response is not None:
+            headers = e.response.headers
+            return {
+                "status": "rate_limit_exceeded",
+                "model": "gpt-4o-mini",
+                "limits": {
+                    "remaining_requests": headers.get("x-ratelimit-remaining-requests"),
+                    "limit_requests": headers.get("x-ratelimit-limit-requests"),
+                    "reset_requests": headers.get("x-ratelimit-reset-requests"),
+                    "remaining_tokens": headers.get("x-ratelimit-remaining-tokens"),
+                    "limit_tokens": headers.get("x-ratelimit-limit-tokens"),
+                    "reset_tokens": headers.get("x-ratelimit-reset-tokens"),
+                },
+                "error_message": str(e)
+            }
+        
+        raise HTTPException(status_code=500, detail=f"Failed to fetch OpenAI limits: {str(e)}")
