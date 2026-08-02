@@ -42,7 +42,7 @@ async def run_reduced_dataset_test():
     # Pre-flight check: Validar saldo de OpenAI
     required_requests = { "1": 1000, "2": 2593, "3": 7780 }.get(opcion, 1000)
     
-    async with httpx.AsyncClient(base_url=api_url, timeout=60.0) as client:
+    async with httpx.AsyncClient(base_url=api_url, timeout=60.0, headers={"X-API-Key": settings.API_SECRET_KEY}) as client:
         print("Comprobando límites de OpenAI en el servidor...")
         try:
             limit_res = await client.get(f"{settings.API_V1_STR}/system/openai-limits")

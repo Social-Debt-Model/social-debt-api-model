@@ -29,7 +29,7 @@ async def run_issue_metrics_test():
     print("-" * 50)
     
     # 2. Enviar el archivo a la API (End-to-End Test)
-    async with httpx.AsyncClient(base_url="http://127.0.0.1:8000") as client:
+    async with httpx.AsyncClient(base_url="http://127.0.0.1:8000", headers={"X-API-Key": settings.API_SECRET_KEY}) as client:
         start_time_total = time.time()
         
         with open(csv_filename, "rb") as f:

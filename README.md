@@ -19,6 +19,8 @@ Para garantizar el mejor rendimiento, los menores costos y un determinismo preci
 
 ## 🚀 Endpoints Principales
 
+> **¡IMPORTANTE DE SEGURIDAD!** Toda la API está asegurada. Para consumir cualquier endpoint, tu aplicación Frontend debe enviar obligatoriamente el Header HTTP `X-API-Key` con la contraseña configurada en la variable de entorno `API_SECRET_KEY` de tu archivo `.env`.
+
 * `GET /system/openai-limits`: Realiza un "ping" a la red de OpenAI y extrae de los encabezados (Headers) la cuota exacta de **Peticiones (Requests)** y **Tokens** disponibles en tiempo real. **Crucial antes de enviar lotes masivos para evitar errores 429.**
 * `POST /classify/text`: Clasifica de manera síncrona un (1) solo comentario de texto crudo, arrojando macrocausas y microcausas.
 * `POST /classify/batch`: Sube un archivo CSV de miles de comentarios. Los procesa de forma asíncrona en lotes de alta concurrencia respetando un Límite de Tokens dinámico (`TokenRateLimiter`). Retorna un `job_id`.
@@ -46,5 +48,7 @@ Los reportes de resultados masivos y el JSON de auditoría forense (`reporte_var
 
 * Python 3.10+
 * **2GB de RAM Mínimo** (Requerido para montar el modelo PyTorch NLP en memoria).
-* Archivo `.env` con: `OPENAI_API_KEY=tu_api_key_aqui`
+* Archivo `.env` con: 
+  - `OPENAI_API_KEY=tu_api_key_aqui`
+  - `API_SECRET_KEY=tu_contraseña_secreta_aqui`
 * Diseñado para despliegue ininterrumpido en entornos como **Coolify / VPS**.
