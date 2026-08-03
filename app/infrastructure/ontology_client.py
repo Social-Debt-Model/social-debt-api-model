@@ -65,7 +65,7 @@ def enrich_microcause(cause_uri_str: str):
         
     cause_uri = None
     for s in global_g.subjects():
-        if str(s) == cause_uri_str:
+        if str(s) == cause_uri_str or str(s).endswith(f"#{cause_uri_str}"):
             cause_uri = s
             break
             
