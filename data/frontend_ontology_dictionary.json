@@ -1,0 +1,1184 @@
+{
+  "macro_causes": {
+    "A": "Communication and shared understanding breakdowns",
+    "B": "Coordination and workflow misalignment",
+    "C": "Technical complexity, compatibility, and system constraints",
+    "D": "Organizational and procedural workflow constraints",
+    "E": "Collaboration and interpersonal tensions",
+    "F": "Knowledge, documentation, and standards deficiencies",
+    "G": "Resource, tooling, access, and validation dependencies",
+    "H": "No identificable (Noise)"
+  },
+  "micro_causes": {
+    "CA-006_UnclearRolesAndResponsibilities": {
+      "name": "Unclear roles and responsibilities",
+      "description": "Lack of clarity regarding team roles, responsibilities, ownership, or decision-making authority."
+    },
+    "COG-008_CompatibilityConstraints": {
+      "name": "Compatibility Constraints",
+      "description": "Compatibility problems refer to difficulties, constraints, or potential inconsistencies that arise when software artifacts must remain compatible across versions, APIs, platforms, environments, or legacy behavior."
+    },
+    "CR-001_LackOfTaskDiscussion": {
+      "name": "Lack of Task Discussion",
+      "description": "Lack Of Task Discussion occurs when contributors begin planning or implementation activities without sufficiently discussing requirements, responsibilities, constraints, alternatives, or execution approaches before work starts."
+    },
+    "CO-003_UnclearOrAmbiguousCommunication": {
+      "name": "Unclear or ambiguous communication",
+      "description": "Unclear or Ambiguous Communication occurs when messages, explanations, requests, or instructions lack sufficient clarity, completeness, precision, or context, making them difficult to understand without additional clarification."
+    },
+    "CA-011_RequestForTechnicalValidationSupport": {
+      "name": "Request for Technical Validation Support",
+      "description": "Request for Technical Validation Support occurs when progress depends on validation, confirmation, expert review, or approval from a maintainer, contributor, role, or external technical authority before work can continue."
+    },
+    "COO-003_UnilateralTaskAssignment": {
+      "name": "Unilateral Task Assignment",
+      "description": "Tasks are assigned or re-assigned without team consultation, leading to conflicts and decreased team motivation."
+    },
+    "COO-005_LackOfCrossTeamMeetings": {
+      "name": "Lack of Cross Team Meetings",
+      "description": "Failure to schedule regular cross-team meetings leads to poor alignment and breakdowns in the flow of crucial information."
+    },
+    "COG-006_LackOfInterfaceClarification": {
+      "name": "Lack of Interface Clarification",
+      "description": "Lack of Interface Clarification occurs when interactions, contracts, inputs, outputs, dependencies, or responsibilities between software components, services, APIs, or systems are not sufficiently specified, making integration or implementation decisions difficult."
+    },
+    "COG-001_KnowledgeMonopoly": {
+      "name": "Knowledge Monopoly",
+      "description": "The concentration of critical technical or project knowledge in a single person or a small group increases dependency and the risk of project failure if they leave the team."
+    },
+    "CA-013_InefficientOrInadequateTools": {
+      "name": "Inefficient or inadequate tools",
+      "description": "Development activities are limited by insufficient tooling, CI limitations, or inadequate tool support."
+    },
+    "COG-007_TechnicalComplexityDueToDependencies": {
+      "name": "Technical complexity due to dependencies",
+      "description": "Technical Complexity Due to Dependencies occurs when dependencies among components, modules, services, tools, or external systems increase the effort required to coordinate, modify, validate, or implement software changes."
+    },
+    "COL-003_InsufficientPeerSupport": {
+      "name": "Insufficient Peer Support",
+      "description": "A contributor requests help, guidance, review,\nor assistance but receives insufficient support from teammates."
+    },
+    "COO-004_FrequentLeadershipConflicts": {
+      "name": "Frequent Leadership Conflicts",
+      "description": "Persistent disputes among those in leadership or key positions disrupt project planning and create friction within the team."
+    },
+    "CL-001_LowSocialization": {
+      "name": "Low Socialization",
+      "description": "Team members rarely participate in discussions,\ninformal conversations, community activities,\nor social interactions, resulting in weak social ties."
+    },
+    "COO-001_CentralizedDecisionMaking": {
+      "name": "Centralized Decision Making",
+      "description": "All major decisions are made by a small group of leaders, reducing team autonomy and limiting opportunities for distributed coordination."
+    },
+    "CA-012_RepositoryAccessLimitation": {
+      "name": "Repository access limitation",
+      "description": "Progress is limited by repository permissions, pull request access, CI access, or restricted validation access."
+    },
+    "COG-009_LackOfTechnicalDocumentation": {
+      "name": "Lack of technical documentation",
+      "description": "Lack of Technical Documentation occurs when architecture descriptions, component specifications, interface definitions, dependency information, configuration details, or technical design decisions are missing, incomplete, or outdated, making system understanding and implementation difficult."
+    },
+    "CO-002_DelayedCommunication": {
+      "name": "Delayed Communication",
+      "description": "Delayed Communication occurs when relevant information, responses, updates, or discussions are not exchanged within the time needed to support effective collaboration and decision-making."
+    },
+    "COG-003_SoloDevelopmentPreference": {
+      "name": "Solo Development Preference",
+      "description": "A team member's persistent preference for working alone impedes collaborative problem solving and reduces integration between team contributions."
+    },
+    "CA-010_BlockageDueToTriageProcess": {
+      "name": "Blockage due to triage process",
+      "description": "Work is blocked because the triage process delays prioritization, assignment, review, or decision-making."
+    },
+    "COO-006_MiscommunicationInTaskHandover": {
+      "name": "Miscommunication In Task Handover",
+      "description": "Miscommunication In Task Handover occurs when work is formally transferred from one contributor, team, or responsible party to another, and critical information about task status, pending actions, responsibilities, deliverables, or expectations is not communicated correctly during the handover process itself."
+    },
+    "COG-004_LackOfPeerAcknowledgement": {
+      "name": "Lack of Peer Acknowledgement",
+      "description": "Contributions, ideas, efforts, or achievements are not recognized, credited, appreciated, or acknowledged by peers."
+    },
+    "CA-009_ConstraintDueToTicketStatusForReview": {
+      "name": "Constraint due to ticket status for review",
+      "description": "Work progress is constrained because the ticket status requires review, validation, or state change before continuing."
+    },
+    "CO-001_LanguageBarriers": {
+      "name": "Language Barriers",
+      "description": "Language Barriers occurs when contributors experience communication difficulties due to differences in natural language, limited proficiency in the project's working language, translation problems, multilingual communication, or dialect differences that hinder mutual understanding."
+    },
+    "COO-008_CoordinationMisalignmentForTechnicalValidation": {
+      "name": "Coordination misalignment for technical validation",
+      "description": "Coordination Misalignment for Technical Validation occurs when team members are not aligned regarding who should perform technical validation, when validation should occur, what validation criteria should be applied, or how validation activities should be coordinated before approval or release."
+    },
+    "COG-005_InformationDisconnect": {
+      "name": "Information Disconnect",
+      "description": "Breaks in the chain of knowledge sharing or communication create misunderstandings, errors, and information gaps."
+    },
+    "CA-004_NoKnowledgeTransferPolicy": {
+      "name": "No Knowledge Transfer Policy in Communication Activities",
+      "description": "The lack of a formal knowledge transfer policy results in critical information being lost during personnel transitions, reducing team efficiency and increasing dependency on specific individuals."
+    },
+    "COL-004_LackOfCollaborationOrTeamwork": {
+      "name": "Lack of collaboration or teamwork",
+      "description": "Lack of Collaboration or Teamwork occurs when contributors work independently and rarely engage in joint activities such as discussion, knowledge exchange, collective problem-solving, or shared decision-making, creating isolated work practices and collaboration silos."
+    },
+    "COO-009_TaskReworkDueToMisalignment": {
+      "name": "Task rework due to misalignment",
+      "description": "Task Rework Due To Misalignment occurs when contributors complete work based on inconsistent agreements, assumptions, requirements, or coordination decisions, causing previously completed work to be revised, repeated, reverted, or implemented again."
+    },
+    "COL-006_LackOfTrustAmongTeamMembers": {
+      "name": "Lack of trust among team members",
+      "description": "Contributors question the reliability, competence,\nintentions, or good faith of other team members."
+    },
+    "ADM-002_LackOfDocumentation": {
+      "name": "Lack of Documentation",
+      "description": "Lack of Documentation occurs when project, process, operational, or knowledge-sharing documentation is missing, incomplete, outdated, or inaccessible, making knowledge transfer, onboarding, and collaboration difficult."
+    },
+    "ADM-003_LackOfStandardsOrBestPractices": {
+      "name": "Lack of standards or best practices",
+      "description": "Lack of Standards or Best Practices occurs when contributors do not have agreed guidelines, conventions, procedures, coding standards, review practices, or governance criteria to guide consistent work."
+    },
+    "CA-007_InefficientOrganizationalProcesses": {
+      "name": "Inefficient organizational processes",
+      "description": "Inefficient organizational procedures, workflows, or decision processes that hinder team performance and coordination."
+    },
+    "CO-006_PerceivedUnfairnessInInteraction": {
+      "name": "Perceived unfairness in interaction",
+      "description": "A contributor perceives bias, unfair treatment,\ndouble standards, exclusion, or inequitable decisions."
+    },
+    "CA-008_LackOfResources": {
+      "name": "Lack of resources (time, people, budget)",
+      "description": "Insufficient availability of time, personnel, budget, or organizational support required to perform the work effectively."
+    },
+    "COG-002_ExclusiveExpertise": {
+      "name": "Exclusive Expertise",
+      "description": "When only a few individuals have access to essential project information or systems, it creates a bottleneck for knowledge transfer and increases team vulnerability."
+    },
+    "CA-005_BlockageDueToApprovalRequirements": {
+      "name": "Blockage due to approval requirements",
+      "description": "Work blockage caused by approval requirements that delay task progress, validation, or decision-making."
+    },
+    "COO-002_RestrictedInformationFlow": {
+      "name": "Restricted Information Flow",
+      "description": "Limiting the distribution of key project information to select members prevents effective coordination among all team participants."
+    },
+    "COG-010_PreservationOfPriorSystemBehavior": {
+      "name": "Preservation of prior system behavior",
+      "description": "Preservation of Prior System Behavior occurs when software changes are constrained by the need to maintain previously expected functionality, backward compatibility, or established system behavior."
+    },
+    "CO-005_MisinterpretationOfInformation": {
+      "name": "Misinterpretation of information",
+      "description": "Misinterpretation of Information occurs when shared information, requirements, instructions, or decisions are understood differently from their intended meaning, resulting in inconsistent understanding among team members."
+    },
+    "COL-002_LackOfTeamwork": {
+      "name": "Lack of Teamwork",
+      "description": "Lack of Teamwork occurs when team members are unable to coordinate their efforts effectively toward shared goals, resulting in fragmented task execution, poor synchronization, duplicated work, and reduced collective performance."
+    },
+    "CO-004_LackOfTimelyFeedbackOrResponse": {
+      "name": "Lack of timely feedback or response",
+      "description": "Lack of Timely Feedback or Response occurs when questions, requests, reviews, or communications do not receive feedback or responses within a reasonable timeframe, delaying coordination and decision-making activities."
+    },
+    "CA-001_LackOfCommunicationPlan": {
+      "name": "Lack of Communication Plan",
+      "description": "The absence or poor design of a communication plan results in unclear procedures and roles, hindering effective information flow and decision-making within the team."
+    },
+    "CA-003_LackOfFeedbackChannels": {
+      "name": "Lack of Feedback Channels in Communication Activities",
+      "description": "The absence of established and accessible feedback channels hinders open communication and prevents early detection of issues, leading to frustration and demotivation within the team."
+    },
+    "COG-011_SystemConfigurationConstraints": {
+      "name": "System configuration constraints",
+      "description": "System Configuration Constraints occur when configuration settings, environment differences, infrastructure dependencies, or system-specific behaviors restrict software implementation, testing, or deployment activities."
+    },
+    "COL-005_LackOfKnowledgeSharing": {
+      "name": "Lack of knowledge sharing",
+      "description": "Knowledge, expertise, lessons learned, or technical information\nare not actively shared among contributors."
+    },
+    "COL-007_CollaborationConstraintDueToRepositoryAccess": {
+      "name": "Collaboration constraint due to repository access",
+      "description": "Collaboration is limited because one or more contributors lack the required repository permissions, visibility, or access rights."
+    },
+    "NC-001_NoIdentifiableCause": {
+      "name": "No identifiable cause",
+      "description": "No specific social, organizational, coordination, collaboration, communication, or congruence-related cause could be identified from the available evidence."
+    }
+  },
+  "strategies": {
+    "PS-022_ClearValidationWorkflow": {
+      "name": "Clear validation workflow",
+      "description": "Define a clear workflow for technical validation, including roles, steps, and acceptance criteria."
+    },
+    "STR-G-010_LeadershipRotation": {
+      "name": "Leadership Rotation",
+      "description": "Rotate leadership roles among team members to ensure shared responsibility and inclusion."
+    },
+    "STR-G-006_PeerMentoring": {
+      "name": "Peer Mentoring",
+      "description": "Implement a peer mentoring system to facilitate knowledge transfer between team members."
+    },
+    "STR-G-003_TeamRecognitionPrograms": {
+      "name": "Team Recognition Programs",
+      "description": "Create programs to recognize and reward team achievements and contributions."
+    },
+    "CS-032_TaskExecutionImprovement": {
+      "name": "Task execution improvement",
+      "description": "Improve task execution by clarifying responsibilities, removing blockers, validating dependencies, and adjusting workflow practices."
+    },
+    "PS-025_AccessPlanning": {
+      "name": "Access planning",
+      "description": "Ensure contributors have the repository, branch, CI, and validation access needed for their tasks."
+    },
+    "STR-005_EnhanceOrgSupport": {
+      "name": "Enhance Organizational Support",
+      "description": "\n        Establish mentoring and support programs to improve organizational support for team members.\n    "
+    },
+    "PS-008_TaskDiscussionPlatform": {
+      "name": "Task Discussion Platform",
+      "description": "Implement a digital platform (e.g., forum, chat) dedicated to open discussion and tracking of team tasks."
+    },
+    "PS-011_PeriodicInformationSync": {
+      "name": "Periodic Information Synchronization",
+      "description": "Establish periodic team sync meetings to align on goals, progress, and resolve disconnects in information."
+    },
+    "PS-005_CrossTeamCoordinationMeetings": {
+      "name": "Cross-Team Coordination Meetings",
+      "description": "Hold regular meetings for representatives of all teams to ensure coordination and address dependencies."
+    },
+    "PS-004_SocialEventsProgram": {
+      "name": "Social Events Program",
+      "description": "Launch regular informal social events (lunches, games, outings) to strengthen personal relationships within the team."
+    },
+    "PS-012_InterfaceDocumentationGuidelines": {
+      "name": "Interface Documentation Guidelines",
+      "description": "Develop and enforce documentation guidelines for interfaces and dependencies to improve clarity and integration."
+    },
+    "STR-I-009_EmpathyTraining": {
+      "name": "Empathy Training",
+      "description": "Conduct empathy training sessions to help individuals better understand and relate to others."
+    },
+    "STR-001_ClarifyOrgStructure": {
+      "name": "Clarify Organizational Structure",
+      "description": "\n        Define and communicate the organization's structure and reporting lines to all members.\n    "
+    },
+    "STR-I-007_PersonalGoalSetting": {
+      "name": "Personal Goal Setting",
+      "description": "Facilitate personal goal-setting workshops to help individuals set and achieve meaningful objectives."
+    },
+    "STR-I-016_ChangeChampions": {
+      "name": "Change Champions",
+      "description": "Designate change champions to support and guide individuals through change processes."
+    },
+    "PS-022_ConfigurationReview": {
+      "name": "Configuration review",
+      "description": "Review environment and configuration assumptions before accepting the implementation."
+    },
+    "STR-G-007_ConsensusBuildingMeetings": {
+      "name": "Consensus-Building Meetings",
+      "description": "Facilitate structured meetings focused on building team consensus for key decisions."
+    },
+    "PS-017_TimelyFeedbackMechanism": {
+      "name": "Timely feedback mechanism",
+      "description": "Establish explicit mechanisms and expected response times for feedback, clarification, and communication follow-up."
+    },
+    "PS-021_TrustBuildingPractices": {
+      "name": "Trust-building practices",
+      "description": "Implement practices that foster transparency, psychological safety, mutual respect, and trust among team members."
+    },
+    "STR-010_LeadershipDevelopmentProgram": {
+      "name": "Leadership Development Program",
+      "description": "\n        Provide ongoing leadership training and development programs.\n    "
+    },
+    "PS-028_RoleAndResponsibilityClarification": {
+      "name": "\n        Role and Responsibility Clarification\n    ",
+      "description": "\n        Defines roles, responsibilities, accountability boundaries, and decision-making ownership before task execution to prevent ambiguity, responsibility overlap, and coordination breakdowns.\n    "
+    },
+    "PS-103_TranslationToolsUse": {
+      "name": "Use of Translation Tools",
+      "description": "Provide and encourage the use of real-time translation tools and services in meetings, emails, and collaborative platforms."
+    },
+    "STR-G-009_CollectiveDecisionFrameworks": {
+      "name": "Collective Decision Frameworks",
+      "description": "Adopt frameworks that require group participation in all major decisions."
+    },
+    "CS-025_RequestRepositoryAccess": {
+      "name": "Request repository or CI access",
+      "description": "Request the permissions, branch access, or CI access needed to unblock work."
+    },
+    "STR-I-001_StressManagementWorkshops": {
+      "name": "Stress Management Workshops",
+      "description": "Organize workshops on stress management techniques for individual team members."
+    },
+    "STR-G-014_PsychologicalSafetyWorkshops": {
+      "name": "Psychological Safety Workshops",
+      "description": "Hold workshops to foster psychological safety and a respectful work environment."
+    },
+    "PS-102_LanguageTrainingProgram": {
+      "name": "Language Training Program",
+      "description": "Implement language training and cultural awareness programs for team members to enhance communication effectiveness."
+    },
+    "PS-023_CoordinationProtocols": {
+      "name": "Coordination protocols",
+      "description": "Establish coordination protocols for task assignment, handovers, and cross-team interactions."
+    },
+    "PS-006_DocumentedTaskHandoverChecklist": {
+      "name": "Documented Task Handover Checklist",
+      "description": "Create and enforce a documented checklist for each task handover, ensuring critical information is not missed."
+    },
+    "STR-G-013_ConflictResolutionTraining": {
+      "name": "Conflict Resolution Training",
+      "description": "Provide training on conflict resolution techniques and create protocols for managing disputes."
+    },
+    "PS-005_FeedbackChannelsPolicy": {
+      "name": "Feedback Channels Policy",
+      "description": "Develop and implement clear policies for establishing, using, and maintaining effective feedback channels within the team and organization."
+    },
+    "PS-027_ProcessStandardizationGuidelines": {
+      "name": "\n        Process Standardization Guidelines\n    ",
+      "description": "\n        Establishes standardized procedures, organizational workflows, responsibility flows, and process checkpoints to prevent inefficiencies caused by inconsistent or poorly defined organizational processes.\n    "
+    },
+    "PS-008_PeerReviewSessions": {
+      "name": "Peer Review Sessions",
+      "description": "Schedule recurring peer review sessions for task clarification, mutual feedback, and collaborative improvement."
+    },
+    "STR-G-015_RegularTeamMeetings": {
+      "name": "Regular Team Meetings",
+      "description": "Schedule frequent team meetings to strengthen connections and alignment among members."
+    },
+    "PS-026_CompatibilityManagement": {
+      "name": "Compatibility management",
+      "description": "Define compatibility standards and validation mechanisms between systems, tools, and components."
+    },
+    "CS-024_RequestMaintainerValidation": {
+      "name": "Request maintainer validation",
+      "description": "Ask the responsible maintainer or expert to validate the result so the work can continue."
+    },
+    "STR-008_ThirdPartyResourceSupport": {
+      "name": "Third-Party Resource Support",
+      "description": "\n        Establish agreements with third-party providers for backup resources and support.\n    "
+    },
+    "PS-005_PairProgrammingSessions": {
+      "name": "Pair Programming Sessions",
+      "description": "Implement regular pair programming or group coding sessions to promote collaboration, knowledge sharing, and support."
+    },
+    "PS-002_CollaborativeGoalsSetting": {
+      "name": "Collaborative Goals Setting",
+      "description": "Facilitate collaborative goal-setting sessions to align individual and team objectives and reinforce collective responsibility."
+    },
+    "PS-009_PeerReviewSessions": {
+      "name": "PeerReviewSessions",
+      "description": "Schedule recurring peer review sessions for task clarification and mutual feedback among team members."
+    },
+    "PS-029_ResourceAvailabilityPlanning": {
+      "name": "Resource Availability Planning",
+      "description": "Plans and allocates time, personnel, budget, and organizational support before task execution to prevent workflow interruptions caused by insufficient resource availability."
+    },
+    "STR-009_LeadershipConflictMediation": {
+      "name": "Leadership Conflict Mediation",
+      "description": "\n        Implement mediation sessions for resolving recurring leadership conflicts.\n    "
+    },
+    "PS-104_CommunicationProtocols": {
+      "name": "Implementation of Communication Protocols",
+      "description": "Establish clear and agreed-upon communication protocols specifying channels, urgency levels, and escalation paths."
+    },
+    "PS-013_CrossComponentReviewBoards": {
+      "name": "Cross-Component Review Boards",
+      "description": "Establish review boards with representatives from different components or teams to clarify interface needs."
+    },
+    "PS-001_TeamBuildingWorkshops": {
+      "name": "Team Building Workshops",
+      "description": "Organize periodic team building workshops to foster interaction, trust, and social bonding among team members."
+    },
+    "STR-I-012_PeerInteractionSessions": {
+      "name": "Peer Interaction Sessions",
+      "description": "Organize peer interaction sessions to foster social skills and relationships."
+    },
+    "STR-011_TaskAssignmentReview": {
+      "name": "Task Assignment Review",
+      "description": "\n        Schedule periodic reviews of task assignment processes to ensure efficiency and fairness.\n    "
+    },
+    "CS-033_ReworkReductionReview": {
+      "name": "Rework reduction review",
+      "description": "Analyze causes of rework and define corrective actions to clarify requirements, review decisions, and avoid repeated task changes."
+    },
+    "STR-I-017_CommunicationSkillsTraining": {
+      "name": "Communication Skills Training",
+      "description": "Offer targeted training sessions to improve communication skills at the individual level."
+    },
+    "PS-001_ConflictResolutionSessions": {
+      "name": "Conflict resolution sessions",
+      "description": "Facilitate structured sessions to resolve conflicts, improve relationships, and restore trust among team members."
+    },
+    "PS-015_InterTeamLiaisonRoles": {
+      "name": "Inter-Team Liaison Roles",
+      "description": "Assign liaisons from each team to facilitate communication, dependency management, and meeting scheduling."
+    },
+    "STR-004_ProcessOptimization": {
+      "name": "Process Optimization",
+      "description": "\n        Implement process optimization initiatives to streamline workflows and reduce bottlenecks.\n    "
+    },
+    "STR-G-001_TrustBuildingWorkshops": {
+      "name": "Trust-Building Workshops",
+      "description": "Conduct regular workshops focused on trust-building activities and exercises to strengthen relationships within the team."
+    },
+    "PS-026_ToolingReadinessReview": {
+      "name": "Tooling readiness review",
+      "description": "Check whether required tooling, automation, and CI support are available before work starts."
+    },
+    "STR-012_DelegationTraining": {
+      "name": "Delegation Training",
+      "description": "\n        Offer training to leaders on effective delegation and workload distribution.\n    "
+    },
+    "PS-010_CentralizedKnowledgeBase": {
+      "name": "Centralized Knowledge Base",
+      "description": "Develop a centralized and regularly updated knowledge base for project documentation and FAQs."
+    },
+    "PS-004_DocumentationPolicyImplementation": {
+      "name": "Documentation Policy Implementation",
+      "description": "Define, communicate, and enforce documentation policies and standards for all projects and processes."
+    },
+    "PS-003_KnowledgeTransferProcedure": {
+      "name": "Knowledge Transfer Procedure",
+      "description": "Establish and formalize a procedure for knowledge transfer during employee transitions, project handovers, and onboarding processes."
+    },
+    "PS-016_ClearCommunicationGuidelines": {
+      "name": "Clear communication guidelines",
+      "description": "Define clear communication rules, channels, responsibilities, and expected response practices to reduce ambiguity and misunderstandings."
+    },
+    "CS-020_RestateAndClarifyMeaning": {
+      "name": "Restate and clarify meaning",
+      "description": "Restate the interpreted requirement or decision and request confirmation before continuing."
+    },
+    "PS-105_RegularSyncMeetings": {
+      "name": "Regular Synchronization Meetings",
+      "description": "Schedule regular team meetings and stand-ups to provide timely updates and quickly resolve pending issues."
+    },
+    "STR-016_ExitInterviewFeedback": {
+      "name": "Exit Interview Feedback",
+      "description": "\n        Systematically collect and analyze feedback from exit interviews to address causes of turnover.\n    "
+    },
+    "PS-004_InterfaceClarificationWorkshops": {
+      "name": "Interface Clarification Workshops",
+      "description": "Organize technical workshops to clarify interfaces and dependencies between teams or components."
+    },
+    "PS-023_DefineDocumentationAndReviewStandards": {
+      "name": "Define documentation and review standards",
+      "description": "Define explicit standards for documentation, release notes, examples, and review expectations."
+    },
+    "CS-027_TaskConflictResolution": {
+      "name": "Task conflict resolution",
+      "description": ""
+    },
+    "STR-I-010_ActiveListeningWorkshops": {
+      "name": "Active Listening Workshops",
+      "description": "Organize workshops on active listening skills to promote understanding and empathy."
+    },
+    "PS-018_ClearCommunicationGuidelines": {
+      "name": "PS-018_ClearCommunicationGuidelines",
+      "description": "\n        Define and promote clear communication practices to reduce ambiguity, misunderstandings, and inconsistencies in collaborative interactions.\n    "
+    },
+    "STR-I-002_MindfulnessTraining": {
+      "name": "Mindfulness Training",
+      "description": "Provide mindfulness and relaxation training to help individuals handle stress."
+    },
+    "PS-007_TaskDiscussionPlatform": {
+      "name": "Task Discussion Platform",
+      "description": "Implement a digital platform dedicated to open discussion and tracking of team tasks, enhancing clarity and participation."
+    },
+    "STR-G-016_SharedVisionWorkshops": {
+      "name": "Shared Vision Workshops",
+      "description": "Organize workshops to co-create and reinforce a shared vision and values within the team."
+    },
+    "CS-028_TaskDeliveryRecoveryPlan": {
+      "name": "Task delivery recovery plan",
+      "description": "Define corrective actions to recover delayed tasks by clarifying priorities, responsibilities, dependencies, and delivery commitments."
+    },
+    "CS-022_ReproduceAndValidateEnvironment": {
+      "name": "Reproduce and validate environment",
+      "description": "Reproduce the failure in the reported environment and validate the corrective behavior."
+    },
+    "CS-029_EffortRealignmentReview": {
+      "name": "Effort realignment review",
+      "description": "Review and realign team efforts to reduce duplicated, divergent, or poorly coordinated work."
+    },
+    "STR-I-006_ChangeAmbassadors": {
+      "name": "Change Ambassadors",
+      "description": "Assign change ambassadors to support team members in adapting to organizational changes."
+    },
+    "STR-G-002_TransparencyInitiatives": {
+      "name": "Transparency Initiatives",
+      "description": "Implement transparency initiatives such as open meetings and shared documentation to build trust."
+    },
+    "PS-007_HandoverRoleAssignment": {
+      "name": "Handover Role Assignment",
+      "description": "Assign clear handover roles and responsibilities within the team to reduce ambiguity and errors during transitions."
+    },
+    "STR-I-004_PersonalCoaching": {
+      "name": "Personal Coaching",
+      "description": "Provide personal coaching sessions for individuals to explore strengths and weaknesses."
+    },
+    "PS-025_DependencyManagement": {
+      "name": "Dependency management",
+      "description": "Manage and document system dependencies to reduce complexity and improve alignment between tasks and technical components."
+    },
+    "PS-002_ProcessImprovementActions": {
+      "name": "Process improvement actions",
+      "description": "Adjust and optimize workflows, coordination processes, and task management practices to reduce inefficiencies."
+    },
+    "CS-020_SharedUnderstandingRecovery": {
+      "name": "Shared Understanding Recovery",
+      "description": "Restores shared technical understanding through clarification sessions, architecture walkthroughs, decision records, and alignment reviews to reduce misunderstandings affecting software quality and technical coordination."
+    },
+    "STR-G-008_VotingMechanisms": {
+      "name": "Voting Mechanisms",
+      "description": "Introduce voting or polling mechanisms to ensure everyone’s input is considered."
+    },
+    "STR-002_RoleDefinitionWorkshops": {
+      "name": "Role Definition Workshops",
+      "description": "\n        Conduct workshops to define and clarify roles and responsibilities for all team members.\n    "
+    },
+    "PS-002_RegularTeamMeetings": {
+      "name": "Regular Team Meetings",
+      "description": "Establish regular meetings to discuss tasks and responsibilities, ensuring everyone is aligned and able to share feedback."
+    },
+    "STR-I-015_ChangeManagementTraining": {
+      "name": "Change Management Training",
+      "description": "Provide training and resources on effective change management for individuals."
+    },
+    "CS-021_TargetedCompatibilityValidation": {
+      "name": "Targeted compatibility validation",
+      "description": "Run focused validation for affected APIs, databases, versions, or platforms to confirm safe behavior."
+    },
+    "CS-026_ImproveToolingSupport": {
+      "name": "Improve tooling support",
+      "description": "Provide or improve the tools, automation, or CI support required to continue work."
+    },
+    "PS-020_CommunicationClarificationProtocol": {
+      "name": "Communication clarification protocol",
+      "description": "Define explicit practices for asking, answering, and documenting clarification requests during review."
+    },
+    "CS-023_UpdateStandardsAndDocs": {
+      "name": "Update standards and documentation",
+      "description": "Revise documentation and standards to remove ambiguity and align contributor expectations."
+    },
+    "PS-001_StandardizedTaskHandoverProcess": {
+      "name": "Standardized Task Handover Process",
+      "description": "Implement a standardized process and documentation for handing over tasks between teams to avoid miscommunication and delays."
+    },
+    "PS-021_CompatibilityImpactAnalysis": {
+      "name": "Compatibility impact analysis",
+      "description": "Evaluate compatibility implications across APIs, databases, versions, platforms, and external components before implementation."
+    },
+    "PS-019_CollaborativeWorkPractices": {
+      "name": "Collaborative work practices",
+      "description": "Promote collaborative practices such as pair work, joint reviews, shared planning, and collective problem-solving."
+    },
+    "STR-I-013_AchievementAcknowledgement": {
+      "name": "Achievement Acknowledgement",
+      "description": "Develop systems for acknowledging individual achievements publicly and frequently."
+    },
+    "PS-004_ResourceReallocation": {
+      "name": "Resource reallocation",
+      "description": "Reallocate time, personnel, or budget to address resource shortages and improve performance."
+    },
+    "CS-PM-006_EffortAlignmentRecovery": {
+      "name": "Effort Alignment Recovery",
+      "description": "Realigns project tasks, responsibilities, priorities, and coordination mechanisms to reduce duplicated work, misaligned efforts, and inefficient task execution."
+    },
+    "STR-G-005_SharedKnowledgeSessions": {
+      "name": "Shared Knowledge Sessions",
+      "description": "Schedule knowledge-sharing sessions where team members present topics or lessons learned."
+    },
+    "PS-106_ResponseTimePolicies": {
+      "name": "Response Time Policies",
+      "description": "Define and communicate expected response times for emails, messages, and requests to improve agility and reduce waiting periods."
+    },
+    "STR-014_LeadershipSuccessionPlanning": {
+      "name": "Leadership Succession Planning",
+      "description": "\n        Develop succession plans to ensure continuity in leadership roles and responsibilities.\n    "
+    },
+    "PS-101_MultilingualResources": {
+      "name": "Development of Multilingual Resources",
+      "description": "Create and provide project materials, documentation, and tools in multiple languages to facilitate understanding and participation."
+    },
+    "CS-004_ResourceReallocation": {
+      "name": "Resource reallocation",
+      "description": "Reallocation of time, personnel, budget, or organizational resources to mitigate limited access to resources and related inefficiencies."
+    },
+    "PS-003_TransparentInformationChannels": {
+      "name": "Transparent Information Channels",
+      "description": "Establish transparent and open communication channels for sharing all relevant information across the team."
+    },
+    "STR-I-003_SelfAssessmentTools": {
+      "name": "Self-Assessment Tools",
+      "description": "Introduce self-assessment and reflection tools to improve self-awareness."
+    },
+    "PS-003_PeerMentoringProgram": {
+      "name": "Peer Mentoring Program",
+      "description": "Establish a peer mentoring program to encourage support, knowledge exchange, and collaboration among colleagues."
+    },
+    "PS-026_ApprovalWorkflowPredefinition": {
+      "name": "\n        Approval Workflow Predefinition\n    ",
+      "description": "\n        Defines approval responsibilities, validation criteria, escalation paths, and review dependencies before task execution in order to prevent workflow blockages caused by pending approvals or unclear validation processes.\n    "
+    },
+    "STR-015_EmployeeEngagementPrograms": {
+      "name": "Employee Engagement Programs",
+      "description": "\n        Create and maintain programs aimed at increasing employee satisfaction and retention.\n    "
+    },
+    "STR-G-004_EngagementActivities": {
+      "name": "Engagement Activities",
+      "description": "Organize regular team engagement and bonding activities to boost morale and motivation."
+    },
+    "PS-014_SharedCoordinationCalendar": {
+      "name": "Shared Coordination Calendar",
+      "description": "Use a shared calendar to schedule and track cross-team meetings and milestones for better project alignment."
+    },
+    "PS-003_TechnicalRefactoring": {
+      "name": "Technical refactoring",
+      "description": "Refactor code, dependencies, and system structure to reduce complexity and improve maintainability."
+    },
+    "CS-030_TechnicalComplexityReduction": {
+      "name": "Technical complexity reduction",
+      "description": "Reduce accumulated technical complexity through targeted refactoring, dependency simplification, and focused technical validation."
+    },
+    "STR-013_LeadershipMentorship": {
+      "name": "Leadership Mentorship",
+      "description": "\n        Pair emerging leaders with experienced mentors for ongoing guidance and support.\n    "
+    },
+    "STR-I-014_RecognitionFeedback": {
+      "name": "Recognition Feedback",
+      "description": "Provide feedback sessions that focus on individual contributions and recognition."
+    },
+    "CS-031_TechnicalDebtRemediation": {
+      "name": "Technical debt remediation",
+      "description": "Apply corrective actions to reduce accumulated technical debt through refactoring, validation, documentation updates, and resolution of unresolved technical constraints."
+    },
+    "STR-I-018_PublicSpeakingWorkshops": {
+      "name": "Public Speaking Workshops",
+      "description": "Organize public speaking and presentation skills workshops for team members."
+    },
+    "STR-I-005_ChangeAdaptationTraining": {
+      "name": "Change Adaptation Training",
+      "description": "Offer training on adaptation and flexibility to help individuals embrace change."
+    },
+    "PS-024_PreplanValidationOwnership": {
+      "name": "Preplan validation ownership",
+      "description": "Identify who is responsible for technical validation before progress becomes blocked."
+    },
+    "STR-007_ResourceInventoryReview": {
+      "name": "Resource Inventory Review",
+      "description": "\n        Conduct regular reviews of resource inventory and needs to address shortages.\n    "
+    },
+    "STR-003_RestructureTeams": {
+      "name": "Restructure Teams",
+      "description": "\n        Review and redesign team structures to optimize efficiency and communication.\n    "
+    },
+    "PS-020_KnowledgeSharingSessions": {
+      "name": "Knowledge sharing sessions",
+      "description": "Establish regular sessions to share technical knowledge, lessons learned, and relevant project information."
+    },
+    "PS-006_SupportNetworkCreation": {
+      "name": "Support Network Creation",
+      "description": "Create a formal or informal internal support network so team members can seek and offer help on a regular basis."
+    },
+    "PS-018_InformationClarificationPractice": {
+      "name": "Information clarification practice",
+      "description": "Promote clarification practices such as confirmation of understanding, written agreements, and explicit documentation of decisions."
+    },
+    "PS-027_TechnicalDocumentationPractices": {
+      "name": "Technical documentation practices",
+      "description": "Establish practices to document system behavior, architecture, decisions, and dependencies."
+    },
+    "STR-I-008_RecognitionPrograms": {
+      "name": "Recognition Programs",
+      "description": "Develop recognition and rewards programs to boost individual motivation."
+    },
+    "STR-I-011_SocialSkillsWorkshops": {
+      "name": "Social Skills Workshops",
+      "description": "Conduct training on social skills and teamwork for individual improvement."
+    },
+    "PS-024_AlignmentMeetings": {
+      "name": "Alignment meetings",
+      "description": "Schedule regular alignment meetings to synchronize expectations, dependencies, and progress."
+    },
+    "CS-034_ResourceUseCorrection": {
+      "name": "Resource use correction",
+      "description": "Correct inefficient use of time, effort, and resources by reviewing task allocation, removing blockers, and improving work coordination."
+    },
+    "STR-G-011_CollaborativeGoalSetting": {
+      "name": "Collaborative Goal Setting",
+      "description": "Establish shared goals and KPIs that require teamwork to achieve, reducing unhealthy rivalry."
+    },
+    "PS-020_BackwardCompatibilityReview": {
+      "name": "PS-020_BackwardCompatibilityReview",
+      "description": "\n        Establish systematic reviews to ensure that new changes preserve compatibility with previous system behaviors, interfaces, and dependent components.\n    "
+    },
+    "PS-006_FormalPeerSupportMechanism": {
+      "name": "PS-006_FormalPeerSupportMechanism",
+      "description": "\n        Establish formal peer support mechanisms that facilitate collaborative assistance, knowledge exchange, and mutual problem solving among team members.\n    "
+    },
+    "STR-006_SupportResourceAllocation": {
+      "name": "Support Resource Allocation",
+      "description": "\n        Ensure fair and sufficient resource allocation to all teams.\n    "
+    },
+    "STR-G-012_TeamBuildingRetreats": {
+      "name": "Team-Building Retreats",
+      "description": "Organize offsite retreats focused on team building and collaborative activities."
+    }
+  },
+  "effects": {
+    "AEF-002_InefficientStructure": {
+      "name": "Inefficient Organizational Structure",
+      "description": "Inefficient and bureaucratic structures reduce the team's agility and responsiveness to project changes."
+    },
+    "IEF-004_LackOfMotivation": {
+      "name": "Lack of Motivation and Commitment",
+      "description": "Individuals lose motivation and commitment to the project due to repeated challenges and lack of support."
+    },
+    "IEF-002_LackOfSelfAwareness": {
+      "name": "Lack of Self-awareness and Self-evaluation",
+      "description": "Individuals fail to reflect on their own skills and contributions, limiting personal and professional growth."
+    },
+    "IEF-005_LackOfEmpathy": {
+      "name": "Lack of Empathy",
+      "description": "Team members show a lack of empathy and understanding, leading to interpersonal conflicts and isolation."
+    },
+    "PME-021_BlockedProgressDueToAccessLimitation": {
+      "name": "Blocked progress due to access limitation",
+      "description": "Work is blocked because a contributor lacks repository, branch, CI, or validation access."
+    },
+    "GEF-006_CompetitionAndRivalry": {
+      "name": "Competition and Rivalry",
+      "description": "Team members compete for leadership or recognition, fostering rivalry and harming group cohesion."
+    },
+    "GEF-003_DifficultyInKnowledgeSharing": {
+      "name": "Difficulty in Knowledge Sharing",
+      "description": "Team members face challenges sharing knowledge and experiences, resulting in duplication of effort and inefficiency."
+    },
+    "GEF-005_UnilateralDecisions": {
+      "name": "Conflicts Due to Unilateral Decisions",
+      "description": "Unilateral assignment of tasks causes conflicts, disagreements, and a lack of support and collaboration among team members."
+    },
+    "IEF-003_DifficultyAdaptingToChange": {
+      "name": "Difficulty Adapting to Change",
+      "description": "Team members find it difficult to adapt to new challenges, roles, or changes in the project environment."
+    },
+    "TEF-008_DuplicateOrConflictingTasks": {
+      "name": "Duplicate or Conflicting Tasks",
+      "description": "Duplicate or conflicting tasks arise due to lack of planning and coordination."
+    },
+    "AEF-001_LackOfOrganizationalClarity": {
+      "name": "Lack of Clarity in Vision and Mission",
+      "description": "The absence of clear organizational vision and mission generates confusion and lack of alignment among team members."
+    },
+    "AEF-020_InconsistentDocumentationPractices": {
+      "name": "Inconsistent documentation practices",
+      "description": "Documentation quality, structure, or wording varies across contributions because standards are unclear."
+    },
+    "PME-004_InefficientUseOfResources": {
+      "name": "Inefficient Use of Resources",
+      "description": "The project suffers from inefficiency in resource and time usage, caused by poor knowledge sharing and team coordination."
+    },
+    "TEF-002_CommunicationMisunderstandings": {
+      "name": "Misunderstanding in Communication",
+      "description": "Misinterpretation of information among team members due to unclear communication leads to errors and inefficiency."
+    },
+    "GEF-004_LackOfTeamConsensus": {
+      "name": "Lack of Consensus in Team",
+      "description": "The team has trouble reaching consensus and making collective decisions, which leads to delays and increased conflict."
+    },
+    "TEF-012_DifficultyUnderstandingSystemBehavior": {
+      "name": "Difficulty understanding system behavior",
+      "description": "Difficulty understanding system behavior, dependencies, decisions, or configurations due to insufficient technical documentation."
+    },
+    "PME-002_PoorChangeManagement": {
+      "name": "Ineffective Change Management",
+      "description": "Ineffective management of changes and priorities delays project delivery and increases team frustration."
+    },
+    "AEF-006_InefficientTaskAssignment": {
+      "name": "Inefficient Task Assignment",
+      "description": "Deficient decreases team efficiency."
+    },
+    "TEF-022_EnvironmentSpecificFailure": {
+      "name": "Environment-specific failure",
+      "description": "Failures appear only under specific environments, configurations, versions, or platforms."
+    },
+    "TEF-001_DuplicationOfEffort": {
+      "name": "Duplication of Efforts",
+      "description": "Redundant or unnecessary work due to lack of clarity in task assignment reduces team productivity."
+    },
+    "TEF-006_DuplicationOfEffort": {
+      "name": "Duplication of Effort",
+      "description": "The lack of acknowledgment and collaboration results in redundant work and inefficiencies within the team."
+    },
+    "TEF-009_WastedTimeAndResources": {
+      "name": "Wasted Time and Resources",
+      "description": "Wasted time and resources on redundant or irrelevant activities."
+    },
+    "PME-001_ResourceAllocation": {
+      "name": "Inefficiency in Resource Allocation",
+      "description": "Deficient efficiency in assigning tasks and resources impacts project progress and team satisfaction."
+    },
+    "PME-007_TaskRework": {
+      "name": "Task rework",
+      "description": "Additional work required to correct or redo tasks due to misalignment, misunderstanding, or lack of coordination."
+    },
+    "TEF-010_IncreasedTechnicalComplexity": {
+      "name": "Increased technical complexity",
+      "description": "Increase in technical complexity due to dependencies, lack of documentation, or compatibility constraints."
+    },
+    "PME-004_InefficientTaskExecution": {
+      "name": "Inefficient task execution",
+      "description": "Reduced efficiency in task execution caused by unclear coordination, unresolved dependencies, inadequate tooling, or technical constraints that slow down development work."
+    },
+    "GEF-001_LackOfTrust": {
+      "name": "Lack of Trust and Respect",
+      "description": "Absence of trust and respect among team members leads to conflicts and decreases team cohesion."
+    },
+    "AEF-007_LackOfLeadership": {
+      "name": "Lack of Effective Leadership",
+      "description": "Lack of effective leadership to foster a culture of collaboration and open communication."
+    },
+    "TEF-021_CompatibilityFailure": {
+      "name": "Compatibility failure",
+      "description": "Compatibility failure refers to an actual breakdown of compatibility in which a software change causes an existing API, platform, environment, dependency, or legacy behavior to stop working as expected."
+    },
+    "AEF-004_LimitedResourceAccess": {
+      "name": "Limited Access to Resources",
+      "description": "Limited access to financial, informational, and external support resources delays project progress and problem resolution."
+    },
+    "TEF-004_LackOfSynchronization": {
+      "name": "Lack of Synchronization",
+      "description": "The team lacks synchronization and coordination in technical tasks, causing inefficiencies and delays."
+    },
+    "IEF-009_LackOfCommunicationSkills": {
+      "name": "Lack of Communication and Teamwork Skills",
+      "description": "Some team members lack communication and teamwork skills, making collaboration difficult."
+    },
+    "IEF-006_LowSocialSkills": {
+      "name": "Low Social Skills",
+      "description": "Preference for solo development decreases opportunities for social interaction and teamwork skill development."
+    },
+    "IEF-001_StressManagement": {
+      "name": "Difficulties in Managing Stress",
+      "description": "Difficulty handling work pressure and responsibilities affects individual productivity and efficiency."
+    },
+    "IEF-008_ResistanceToChange": {
+      "name": "Resistance to Change",
+      "description": "Resistance to change by individuals who cling to old or ineffective ways of working."
+    },
+    "TEF-001_TechnicalDebtIncrease": {
+      "name": "Technical debt increase",
+      "description": "Increase in accumulated technical debt due to unresolved technical complexity, compatibility constraints, configuration problems, or implementation decisions that make the system harder to maintain and evolve."
+    },
+    "TEF-020_SharedUnderstandingBreakdown": {
+      "name": "Shared understanding breakdown",
+      "description": "Contributors interpret requirements, decisions, or implementation expectations differently."
+    },
+    "AEF-005_FrequentLeadershipConflicts": {
+      "name": "Frequent Changes in Leadership",
+      "description": "Frequent changes in project leadership cause confusion, instability, and a lack of clear vision and mission within the team."
+    },
+    "AEF-008_HighStaffTurnover": {
+      "name": "High Staff Turnover",
+      "description": "High staff turnover due to an unhealthy work environment."
+    },
+    "PME-006_MisalignedEfforts": {
+      "name": "Misaligned Team Efforts",
+      "description": "Team efforts are not aligned with project objectives due to a lack of planning and discussion."
+    },
+    "PME-022_ToolingConstraint": {
+      "name": "Tooling constraint",
+      "description": "Progress is delayed or made harder by insufficient or inadequate development tooling."
+    },
+    "AEF-003_LackOfOrgSupport": {
+      "name": "Lack of Organizational Support",
+      "description": "Difficulties in addressing project challenges due to lack of organizational support and resources."
+    },
+    "TEF-003_DuplicationOfTasks": {
+      "name": "Duplication of Tasks",
+      "description": "Tasks and efforts are unnecessarily duplicated due to the lack of knowledge sharing and centralization of expertise."
+    },
+    "GEF-008_LackOfCohesion": {
+      "name": "Lack of Cohesion and Direction",
+      "description": "Lack of proper planning leads to poor cohesion and unclear direction within the team."
+    },
+    "PME-005_DelaysInTaskDelivery": {
+      "name": "Delays in Task Delivery",
+      "description": "Delays in delivering tasks due to poor coordination in resource and responsibility assignment."
+    },
+    "GEF-007_TenseWorkEnvironment": {
+      "name": "Tense and Uncooperative Work Environment",
+      "description": "A tense and uncooperative work environment hinders collaboration and impacts team morale."
+    },
+    "IEF-007_LackOfRecognition": {
+      "name": "Lack of Recognition",
+      "description": "Lack of peer recognition leads to reduced motivation and self-esteem among individual team members."
+    },
+    "PME-020_BlockedProgressDueToValidationDependency": {
+      "name": "Blocked progress due to validation dependency",
+      "description": "Work cannot continue until validation, confirmation, or expert review is provided."
+    },
+    "TEF-007_DuplicationDueToLackOfFeedback": {
+      "name": "Duplication of Effort Due to Lack of Feedback",
+      "description": "The absence of peer feedback results in redundant work and missed opportunities for improvement in technical processes."
+    },
+    "PME-003_DelaysInTaskDelivery": {
+      "name": "Delays in Task Delivery",
+      "description": "The delivery of tasks and projects is delayed due to poor knowledge distribution and lack of coordination."
+    },
+    "TEF-011_CompatibilityProblems": {
+      "name": "Compatibility problems",
+      "description": "Technical problems caused by incompatibilities between components, tools, platforms, or system versions."
+    },
+    "GEF-002_LowMotivation": {
+      "name": "Low Motivation and Discouragement",
+      "description": "Low motivation among team members results in decreased productivity and lack of commitment to the project."
+    },
+    "TEF-005_LackOfFeedback": {
+      "name": "Lack of Constructive Feedback",
+      "description": "The absence of peer recognition and feedback reduces opportunities for growth and process improvement."
+    }
+  },
+  "indicators": {
+    "IND-005_Team_Engagement_Rate": {
+      "name": "Team Engagement Rate",
+      "description": "Percentage of active participation in meetings and collaborative events."
+    },
+    "IND-025_AccessDependencyMentions": {
+      "name": "Access dependency mentions",
+      "description": "Mentions of repository, branch, pull request, CI, or permission access limitations."
+    },
+    "IND-011_KnowledgeSharingLevel": {
+      "name": "Knowledge sharing level",
+      "description": ""
+    },
+    "IND-002_Feedback_Latency_Score": {
+      "name": "Feedback Latency Score",
+      "description": "Quantifies average delay in receiving feedback among team members."
+    },
+    "IND-020_ClarificationRequestFrequency": {
+      "name": "Clarification request frequency",
+      "description": "Number of comments asking for clarification, explanation, or meaning disambiguation."
+    },
+    "IND-022_SystemSpecificFailureMentions": {
+      "name": "System-specific failure mentions",
+      "description": "Mentions of failures tied to a specific database, version, operating environment, or platform."
+    },
+    "IND-013_DocumentationCompleteness": {
+      "name": "Documentation completeness",
+      "description": ""
+    },
+    "IND-021_CompatibilityMentions": {
+      "name": "Compatibility mentions",
+      "description": "Mentions of compatibility, APIs, versions, platforms, databases, browsers, or external components."
+    },
+    "IND-001_Communication_Breakdown_Index": {
+      "name": "Communication Breakdown Index",
+      "description": "Measures the degree of communication failures within a team."
+    },
+    "IND-026_ToolingLimitationMentions": {
+      "name": "Tooling limitation mentions",
+      "description": "Mentions of inadequate tools, missing automation, CI limitations, or tooling constraints."
+    },
+    "IND-004_Responsibility_Overlap_Index": {
+      "name": "Responsibility Overlap Index",
+      "description": "Assesses redundancy and role overlap across team members."
+    },
+    "IND-024_ValidationDependencyMentions": {
+      "name": "Validation dependency mentions",
+      "description": "Mentions of required validation, maintainer confirmation, expert review, or blocked verification."
+    },
+    "IND-012_TaskAlignmentLevel": {
+      "name": "Task alignment level",
+      "description": ""
+    },
+    "IND-003_Knowledge_Sharing_Level": {
+      "name": "Knowledge Sharing Level",
+      "description": "Represents how frequently knowledge is shared across the team."
+    },
+    "IND-023_DocumentationStandardMentions": {
+      "name": "Documentation standard mentions",
+      "description": "Mentions of missing standards, unclear documentation expectations, release notes, or wording problems."
+    },
+    "IND-010_CommunicationClarityLevel": {
+      "name": "Communication clarity level",
+      "description": ""
+    }
+  },
+  "metrics": {
+    "MET-020_ClarificationRequestCount": {
+      "name": "Clarification request count",
+      "description": "Count of clarification-related comments within a review discussion."
+    },
+    "MTR-003_Communication_Clarity_Index": {
+      "name": "Communication Clarity Index",
+      "description": "Assesses the clarity of communication within and across development teams."
+    },
+    "MTR-022_SystemSpecificFailureRate": {
+      "name": "System-Specific Failure Rate",
+      "description": "Measures the frequency of failures associated with configuration settings, environment differences, or system-specific behavior."
+    },
+    "MTR-001_Knowledge_Transfer_Efficiency": {
+      "name": "Knowledge Transfer Efficiency",
+      "description": "Measures how effectively knowledge is transferred between team members or departments."
+    },
+    "MTR-026_ToolingLimitationFrequency": {
+      "name": "Tooling Limitation Frequency",
+      "description": "Measures how often inadequate, unavailable, or inefficient tools limit task execution or technical validation."
+    },
+    "MTR-002_Feedback_Loop_Frequency": {
+      "name": "Feedback Loop Frequency",
+      "description": "Indicates how frequently feedback loops occur during development or coordination activities."
+    },
+    "MTR-023_DocumentationStandardCompliance": {
+      "name": "Documentation Standard Compliance",
+      "description": "Measures the degree to which documentation and development artifacts comply with defined standards, guidelines, and best practices."
+    },
+    "MTR-010_ClarityScore": {
+      "name": "Communication clarity score",
+      "description": ""
+    },
+    "MTR-004_Language_Barrier_Impact": {
+      "name": "Language Barrier Impact",
+      "description": "Measures how language barriers hinder communication among team members."
+    },
+    "MTR-021_CompatibilityIssueFrequency": {
+      "name": "Compatibility Issue Frequency",
+      "description": "Frequency of comments, issues, or review discussions that mention compatibility constraints, backward compatibility concerns, version conflicts, platform-dependent behavior, or legacy compatibility requirements."
+    },
+    "MTR-025_AccessDependencyFrequency": {
+      "name": "Access Dependency Frequency",
+      "description": "Measures how often task progress is delayed or blocked by restricted access to repositories, pull requests, CI environments, validation resources, or technical permissions."
+    },
+    "MET-022_SystemSpecificFailureCount": {
+      "name": "System-specific failure count",
+      "description": "Count of mentions related to environment-specific failures."
+    },
+    "MTR-020_ClarificationRequestRate": {
+      "name": "Clarification Request Rate",
+      "description": "Measures the frequency of clarification requests associated with unclear or ambiguous communication."
+    },
+    "MTR-024_ValidationDependencyFrequency": {
+      "name": "Validation Dependency Frequency",
+      "description": "Measures how often task progress depends on technical validation, review, approval, or expert confirmation."
+    },
+    "MTR-013_DocumentationCoverage": {
+      "name": "Documentation coverage",
+      "description": ""
+    },
+    "MET-025_AccessDependencyMentionCount": {
+      "name": "Access dependency mention count",
+      "description": "Count of access or permission dependency mentions in comments."
+    },
+    "MTR-005_Task_Assignment_Clarity_Score": {
+      "name": "Task Assignment Clarity Score",
+      "description": "Assesses the clarity with which tasks are defined and communicated to the team."
+    },
+    "MET-021_CompatibilityMentionCount": {
+      "name": "Compatibility mention count",
+      "description": "Count of compatibility-related mentions in review comments."
+    },
+    "MET-023_DocumentationStandardMentionCount": {
+      "name": "Documentation standard mention count",
+      "description": "Count of documentation standard or wording-related mentions in comments."
+    },
+    "MET-026_ToolingLimitationMentionCount": {
+      "name": "Tooling limitation mention count",
+      "description": "Count of tooling limitation mentions in comments."
+    },
+    "MTR-014_TechnicalAlignmentScore": {
+      "name": "Technical alignment score",
+      "description": "Measures the degree of alignment between technical decisions, implementation constraints, dependencies, and expected system behavior."
+    },
+    "MTR-011_SharedKnowledgeRatio": {
+      "name": "Shared knowledge ratio",
+      "description": ""
+    },
+    "MET-024_ValidationDependencyMentionCount": {
+      "name": "Validation dependency mention count",
+      "description": "Count of validation dependency mentions in comments."
+    },
+    "MTR-006_Information_Disconnect_Index": {
+      "name": "Information Disconnect Index",
+      "description": "Quantifies the frequency of missed or incomplete information exchanges between teams."
+    },
+    "MTR-012_TaskAlignmentScore": {
+      "name": "Task alignment score",
+      "description": ""
+    }
+  },
+  "risks": {
+    "RSK-005_Documentation_Gaps_Risk": {
+      "name": "Documentation Gaps Risk",
+      "description": "Incomplete or missing documentation can impair future maintenance efforts."
+    },
+    "RSK-025_AccessBottleneckRisk": {
+      "name": "Access Bottleneck Risk",
+      "description": "Risk of delays, blocked progress, duplicated effort, or dependency accumulation caused by limited access to repositories, pull requests, CI environments, validation resources, or technical permissions."
+    },
+    "RSK-004_Collaboration_Breakdown_Risk": {
+      "name": "RSK-004_Collaboration_Breakdown_Risk",
+      "description": "\n        Risk of collaboration breakdown caused by delayed communication, unclear feedback, poor coordination, or ineffective interaction among team members, which can negatively affect teamwork and project progress.\n    "
+    },
+    "RSK-024_ValidationBottleneckRisk": {
+      "name": "Validation bottleneck risk",
+      "description": "Risk that work remains blocked because validation depends on a specific maintainer or expert."
+    },
+    "RSK-020_MisinterpretationRisk": {
+      "name": "Misinterpretation risk",
+      "description": "Risk that contributors act on different interpretations of the same requirement or decision."
+    },
+    "RSK-004_Language_Miscommunication_Risk": {
+      "name": "Language Miscommunication Risk",
+      "description": "Miscommunication due to language barriers can reduce team cohesion."
+    },
+    "RSK-026_ToolingRisk": {
+      "name": "Tooling risk",
+      "description": "Risk that inadequate tools or CI limitations delay or reduce quality of work."
+    },
+    "RSK-023_KnowledgeFragmentationRisk": {
+      "name": "Knowledge fragmentation risk",
+      "description": "Risk that knowledge remains fragmented across comments, docs, and undocumented decisions."
+    },
+    "RSK-010_MiscommunicationRisk": {
+      "name": "Miscommunication risk",
+      "description": "Risk of misunderstandings, incorrect decisions, or communication failures due to unclear or ambiguous information."
+    },
+    "RSK-002_Feedback_Delays_Risk": {
+      "name": "Feedback Delays Risk",
+      "description": "Delays in feedback loops can slow down the development cycle."
+    },
+    "RSK-012_ReworkRisk": {
+      "name": "Rework risk",
+      "description": "Risk of additional work caused by misalignment, unclear expectations, or coordination failures."
+    },
+    "RSK-011_KnowledgeLossRisk": {
+      "name": "Knowledge loss risk",
+      "description": "Risk of losing critical knowledge due to insufficient knowledge sharing or documentation."
+    },
+    "RSK-001_Knowledge_Loss_Risk": {
+      "name": "Knowledge Loss Risk",
+      "description": "Loss of critical knowledge due to lack of formal transfer processes."
+    },
+    "RSK-003_Collaboration_Breakdown_Risk": {
+      "name": "Collaboration Breakdown Risk",
+      "description": "Collaboration failures can result in delays and conflicts within the team."
+    },
+    "RSK-022_ConfigurationRisk": {
+      "name": "Configuration risk",
+      "description": "Risk of failures caused by configuration or environment-specific assumptions."
+    },
+    "RSK-013_TechnicalMaintenanceRisk": {
+      "name": "Technical maintenance risk",
+      "description": "Risk of increased maintenance difficulty due to technical complexity, dependencies, or lack of technical documentation."
+    },
+    "RSK-021_BackwardCompatibilityRisk": {
+      "name": "Backward compatibility risk",
+      "description": "Risk of breaking existing APIs, integrations, or expected behavior."
+    },
+    "RSK-006_Technical_Inconsistency_Risk": {
+      "name": "RSK-006_Technical_Inconsistency_Risk",
+      "description": "Risk of introducing inconsistent technical behavior due to unresolved dependencies, incompatible components, configuration constraints, or misaligned implementation decisions."
+    }
+  }
+}

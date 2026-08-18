@@ -119,7 +119,14 @@ def enrich_microcause(cause_uri_str: str):
         for obj in global_g.objects(cause_uri, prop):
             community_smells.add(local_name(obj))
 
+    cause_type = None
+    for c in ontology_causes:
+        if c["ontology_id"] == cause_uri_str or str(c["ontology_uri"]) == str(cause_uri):
+            cause_type = c["cause_type"]
+            break
+
     return {
+        "cause_type": cause_type,
         "preventive_strategies": sorted(preventive),
         "effects": sorted(effects),
         "corrective_strategies": sorted(corrective),

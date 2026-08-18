@@ -68,6 +68,7 @@ async def process_single_comment(text: str) -> dict:
     noise_level = "hard_noise" if is_hard else "operational_noise" if is_oper else "none"
     
     final_code = "H"
+    macro_label = "No identificable"
     final_conf = 1.0
     rule_applied = "none"
     microcauses = []
@@ -94,23 +95,28 @@ async def process_single_comment(text: str) -> dict:
             for m in top_k_res.get("top_candidates", []):
                 enriched = enrich_microcause(m.get("ontology_id") or m.get("cause_id", ""))
                 microcauses.append({
+                    "ontology_id": m.get("ontology_id") or m.get("cause_id", ""),
+                    "cause_type": enriched.get("cause_type"),
                     "cause_name": m.get("specific_cause_name", m.get("cause_id", "")),
                     "similarity": float(m["final_score"]),
-                    "community_smells": enriched.get("community_smells", []),
                     "risks": enriched.get("risks", []),
-                    "ontology_id": m.get("ontology_id") or m.get("cause_id", "")
+                    "community_smells": enriched.get("community_smells", []),
+                    "preventive_strategies": enriched.get("preventive_strategies", []),
+                    "effects": enriched.get("effects", []),
+                    "corrective_strategies": enriched.get("corrective_strategies", []),
+                    "indicators": enriched.get("indicators", []),
+                    "metrics": enriched.get("metrics", [])
                 })
             
     return {
-        "original_text": text,
         "cleaned_text": cleaned_text,
-        "noise_level": noise_level,
         "is_noise": is_noise,
+        "noise_level": noise_level,
         "macro_cause_code": final_code,
+        "macro_cause_clean": macro_label,
         "confidence": final_conf,
         "rule_applied": rule_applied,
-        "microcauses": microcauses,
-        "code": final_code
+        "microcauses": microcauses
     }
 
 async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str, issue_col: str):
@@ -165,7 +171,10 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                         processed += 1
                         continue
                         
-                    row_dict = row.to_dict()
+                    row_dict = {
+                        "issue_number": row.get(issue_col) if issue_col else None,
+                        "comment_id": row.get("comment_id", row.get("id"))
+                    }
                     row_dict.update(res)
                     results.append(row_dict)
                     

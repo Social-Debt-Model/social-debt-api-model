@@ -226,3 +226,4 @@ Icon
 
 # Local config
 *.local
+app/jobs/

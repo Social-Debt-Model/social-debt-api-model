@@ -24,9 +24,9 @@ async def run_reduced_dataset_test():
     opcion = input("Elige una opción (1/2/3/4): ").strip()
     
     if opcion == "1":
-        csv_filename = "Modelo_adaptativo_deuda_social_julio/Dataset_original/dataset_test_1000.csv"
+        csv_filename = "data/dataset_test_1000.csv"
     elif opcion == "2":
-        csv_filename = "Modelo_adaptativo_deuda_social_julio/Dataset_original/dataset_test_2593.csv"
+        csv_filename = "data/dataset_test_2593.csv"
     elif opcion == "3":
         csv_filename = "Modelo_adaptativo_deuda_social_julio/Dataset_original/dataset_master_clean2.csv"
     elif opcion == "4":

@@ -60,7 +60,7 @@ async def bounded_process(sem, text, func):
 
 async def run_e2e():
     print("Cargando dataset de 1000 comentarios...")
-    df = pd.read_csv('Modelo_adaptativo_deuda_social_julio/Dataset_original/dataset_test_1000.csv')
+    df = pd.read_csv('data/dataset_test_1000.csv')
     
     print(f"Procesando {len(df)} comentarios a través de OpenAI (Esto tomará unos minutos)...")
     
