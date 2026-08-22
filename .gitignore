@@ -227,3 +227,4 @@ Icon
 # Local config
 *.local
 app/jobs/
+resultado_api_*.json

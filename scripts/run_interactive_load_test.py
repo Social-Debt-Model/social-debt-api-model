@@ -22,21 +22,24 @@ async def run_reduced_dataset_test():
         api_url = "http://127.0.0.1:8000"
         
     print("\nSelecciona el dataset para la prueba de carga:")
-    print("1. Dataset de 1,000 comentarios")
-    print("2. Dataset de 2,593 comentarios")
-    print("3. Dataset original completo (~7,780 comentarios)")
-    print("4. Cancelar")
+    print("1. Minimuestra de 100 comentarios (3 Issues)")
+    print("2. Dataset de 1,000 comentarios")
+    print("3. Dataset de 2,593 comentarios")
+    print("4. Dataset original completo (~7,780 comentarios)")
+    print("5. Cancelar")
     
-    opcion = input("Elige una opción (1/2/3/4): ").strip()
+    opcion = input("Elige una opción (1/2/3/4/5): ").strip()
     
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if opcion == "1":
-        csv_filename = os.path.join(BASE_DIR, "data/dataset_test_1000.csv")
+        csv_filename = os.path.join(BASE_DIR, "data/dataset_test_100.csv")
     elif opcion == "2":
-        csv_filename = os.path.join(BASE_DIR, "data/dataset_test_2593.csv")
+        csv_filename = os.path.join(BASE_DIR, "data/dataset_test_1000.csv")
     elif opcion == "3":
-        csv_filename = os.path.join(BASE_DIR, "Modelo_adaptativo_deuda_social_julio/Dataset_original/dataset_master_clean2.csv")
+        csv_filename = os.path.join(BASE_DIR, "data/dataset_test_2593.csv")
     elif opcion == "4":
+        csv_filename = os.path.join(BASE_DIR, "Modelo_adaptativo_deuda_social_julio/Dataset_original/dataset_master_clean2.csv")
+    elif opcion == "5":
         print("Prueba cancelada.")
         return
     else:
@@ -47,7 +50,7 @@ async def run_reduced_dataset_test():
     print("-" * 50)
     
     # Pre-flight check: Validar saldo de OpenAI
-    required_requests = { "1": 1000, "2": 2593, "3": 7780 }.get(opcion, 1000)
+    required_requests = { "1": 100, "2": 1000, "3": 2593, "4": 7780 }.get(opcion, 100)
     
     async with httpx.AsyncClient(base_url=api_url, timeout=60.0, headers={"X-API-Key": settings.API_SECRET_KEY}) as client:
         print("Comprobando límites de OpenAI en el servidor...")
@@ -173,6 +176,14 @@ async def run_reduced_dataset_test():
             print(f"\n[Muestra {i}]: '{str(c.get('original_text', ''))[:100]}...'")
             print(f"   - Es Ruido: {c.get('is_noise', False)} ({c.get('noise_level', 'none')})")
             print(f"   - Macrocausa: {c.get('macro_cause_code', 'N/A')} (Confianza: {c.get('confidence', 0)})")
+            
+            mc_list = c.get('microcauses', [])
+            if mc_list:
+                print("   - Microcausas detectadas:")
+                for mc in mc_list:
+                    print(f"     > [{mc.get('cause_id', '')}] {mc.get('cause_name', '')} (Similitud: {mc.get('similarity', 0):.2f})")
+            else:
+                print("   - Microcausas detectadas: Ninguna")
         print("\n... (Ocultando los demás comentarios para mantener la consola limpia) ...")
         
         print("\n" + "=" * 50)
@@ -183,10 +194,11 @@ async def run_reduced_dataset_test():
         
         for i, (issue_id, metrics) in enumerate(list(issues_metrics.items())[:3]):
             print(f"\n[Issue #{issue_id}]")
-            print(f"   - Comentarios válidos: {metrics.get('valid_comments', 0)} / {metrics.get('total_comments', 0)}")
-            print(f"   - Diversidad Normalizada: {metrics.get('normalized_diversity', 0)}")
-            print(f"   - SDI Score (Deuda Social): {metrics.get('sdi_score', 0)}")
-            print(f"   - Riesgo Final (Estado): {metrics.get('sdi_status', 'Unknown')}")
+            print(f"   - Total de comentarios evaluados: {metrics.get('comment_count', 0)}")
+            print(f"   - Diversidad de Macrocausas: {metrics.get('macro_diversity', 0)}")
+            print(f"   - Diversidad de Microcausas: {metrics.get('micro_diversity', 0)}")
+            print(f"   - SDI Score (Índice de Deuda Social): {metrics.get('social_debt_index', 0):.4f}")
+            print(f"   - Riesgo Final (Nivel de Deuda): {metrics.get('social_debt_level', 'Unknown')}")
         print("\n... (Ocultando los demás issues) ...")
             
         print("\n" + "=" * 50)

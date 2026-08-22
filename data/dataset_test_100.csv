@@ -1,0 +1,520 @@
+repo,issue_number,comment_id,comment_author,comment_created_at,comment_body_raw
+kubernetes/kubernetes,136028,3710406863,k8s-ci-robot,2026-01-05T13:22:48Z,"This issue is currently awaiting triage.
+
+If a SIG or subproject determines this is a relevant issue, they will accept it by applying the `triage/accepted` label and provide further guidance.
+
+The `triage/accepted` label can be added by org members by writing `/triage accepted` in a comment.
+
+
+<details>
+
+Instructions for interacting with me using PR comments are available [here](https://git.k8s.io/community/contributors/guide/pull-requests.md).  If you have questions or suggestions related to my behavior, please file an issue against the [kubernetes-sigs/prow](https://github.com/kubernetes-sigs/prow/issues/new?title=Prow%20issue:) repository.
+</details>"
+kubernetes/kubernetes,136028,3710406923,k8s-ci-robot,2026-01-05T13:22:48Z,"Welcome @thc1006! <br><br>It looks like this is your first PR to <a href='https://github.com/kubernetes/kubernetes'>kubernetes/kubernetes</a> 🎉. Please refer to our [pull request process documentation](https://www.kubernetes.dev/docs/guide/pull-requests/) to help your PR have a smooth ride to approval. <br><br>You will be prompted by a bot to use commands during the review process. Do not be afraid to follow the prompts! It is okay to experiment. [Here is the bot commands documentation](https://go.k8s.io/bot-commands). <br><br>You can also check if kubernetes/kubernetes has [its own contribution guidelines](https://github.com/kubernetes/kubernetes/tree/master/CONTRIBUTING.md). <br><br>You may want to refer to our [testing guide](https://git.k8s.io/community/contributors/devel/sig-testing/testing.md) if you run into trouble with your tests not passing. <br><br>If you are having difficulty getting your pull request seen, please follow the [recommended escalation practices](https://www.kubernetes.dev/docs/guide/pull-requests/#why-is-my-pull-request-not-getting-reviewed). Also, for tips and tricks in the contribution process you may want to read the [Kubernetes contributor cheat sheet](https://www.kubernetes.dev/docs/contributor-cheatsheet/). We want to make sure your contribution gets all the attention it needs! <br><br>Thank you, and welcome to Kubernetes. :smiley:"
+kubernetes/kubernetes,136028,3710406981,k8s-ci-robot,2026-01-05T13:22:49Z,"Hi @thc1006. Thanks for your PR.
+
+I'm waiting for a [github.com](https://kubernetes/orgs/kubernetes/people) member to verify that this patch is reasonable to test. If it is, they should reply with `/ok-to-test` on its own line. Until that is done, I will not automatically test new commits in this PR, but the usual testing commands by org members will still work. Regular contributors should [join the org](https://git.k8s.io/community/community-membership.md#member) to skip this step.
+
+Once the patch is verified, the new status will be reflected by the `ok-to-test` label.
+
+I understand the commands that are listed [here](https://go.k8s.io/bot-commands?repo=kubernetes%2Fkubernetes).
+
+<details>
+
+Instructions for interacting with me using PR comments are available [here](https://git.k8s.io/community/contributors/guide/pull-requests.md).  If you have questions or suggestions related to my behavior, please file an issue against the [kubernetes-sigs/prow](https://github.com/kubernetes-sigs/prow/issues/new?title=Prow%20issue:) repository.
+</details>"
+kubernetes/kubernetes,136028,3710407558,thc1006,2026-01-05T13:23:00Z,/release-note-none
+kubernetes/kubernetes,136028,3710789642,HirazawaUi,2026-01-05T15:00:19Z,Would you mind also fixing `./pkg/kubelet/prober/prober.go:106`? They are within the same directory.
+kubernetes/kubernetes,136028,3711154466,thc1006,2026-01-05T16:22:37Z,"Dear  @HirazawaUi, Thanks for pointing that out.
+
+I've updated the PR to include the fix for `prober.go:106` as well — converted to `V(1).Info()` with err as a key-value pair. Now it's consistent with other probe result logs in the same function (like ""Probe failed"" at line 122)."
+kubernetes/kubernetes,136028,3711459563,pohly,2026-01-05T17:48:00Z,"The new [linter check](https://github.com/kubernetes-sigs/logtools/pull/32) finds this in the kubelet:
+
+```
+pkg/kubelet/allocation/allocation_manager.go:576:10: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 		logger.V(3).Error(err, ""Failed to delete pod allocation"", ""podUID"", uid)
+ERROR: 		       ^
+ERROR: pkg/kubelet/cm/devicemanager/plugin/v1beta1/client.go:107:11: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 			logger.V(2).Error(err, ""Failed to close grpc connection"", ""resource"", c.Resource())
+ERROR: 			       ^
+ERROR: pkg/kubelet/cm/dra/plugin/dra_plugin_manager.go:398:13: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 					logger.V(3).Error(err, ""Failed to establish WatchResources stream, will retry"")
+ERROR: 					       ^
+ERROR: pkg/kubelet/kuberuntime/kuberuntime_container_linux.go:430:11: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 			logger.V(5).Error(fmt.Errorf(""failed to parse /proc/self/cgroup: %w"", err), warn)
+ERROR: 			       ^
+ERROR: pkg/kubelet/kuberuntime/kuberuntime_container_linux.go:441:11: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 			logger.V(5).Error(err, warn)
+ERROR: 			       ^
+ERROR: pkg/kubelet/lifecycle/handlers.go:85:11: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 			logger.V(1).Error(err, ""Exec lifecycle hook for Container in Pod failed"", ""execCommand"", handler.Exec.Command, ""containerName"", container.Name, ""pod"", klog.KObj(pod), ""message"", string(output))
+ERROR: 			       ^
+ERROR: pkg/kubelet/lifecycle/handlers.go:93:11: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 			logger.V(1).Error(err, ""HTTP lifecycle hook for Container in Pod failed"", ""path"", handler.HTTPGet.Path, ""containerName"", container.Name, ""pod"", klog.KObj(pod))
+ERROR: 			       ^
+ERROR: pkg/kubelet/lifecycle/handlers.go:101:11: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 			logger.V(1).Error(err, ""Sleep lifecycle hook for Container in Pod failed"", ""sleepSeconds"", handler.Sleep.Seconds, ""containerName"", container.Name, ""pod"", klog.KObj(pod))
+ERROR: 			       ^
+ERROR: pkg/kubelet/lifecycle/handlers.go:152:10: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 		logger.V(1).Error(err, ""HTTPS request to lifecycle hook got HTTP response, retrying with HTTP."", ""pod"", klog.KObj(pod), ""host"", req.URL.Host)
+ERROR: 		       ^
+ERROR: pkg/kubelet/metrics/collectors/cri_metrics.go:110:10: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 		logger.V(5).Error(err, ""Descriptor not present in pre-populated list of descriptors"", ""name"", m.Name)
+ERROR: 		       ^
+ERROR: pkg/kubelet/pleg/generic.go:300:13: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 			g.logger.V(4).Error(err, ""PLEG: Ignoring events for pod"", ""pod"", klog.KRef(pod.Namespace, pod.Name))
+ERROR: 			         ^
+ERROR: pkg/kubelet/prober/prober.go:106:10: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 		logger.V(1).Error(err, ""Probe errored"", ""probeType"", probeType, ""pod"", klog.KObj(pod), ""podUID"", pod.UID, ""containerName"", container.Name, ""probeResult"", result)
+ERROR: 		       ^
+ERROR: pkg/kubelet/prober/prober_manager.go:197:12: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 				logger.V(8).Error(nil, ""Startup probe already exists for container"",
+ERROR: 				       ^
+ERROR: pkg/kubelet/prober/prober_manager.go:209:12: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 				logger.V(8).Error(nil, ""Readiness probe already exists for container"",
+ERROR: 				       ^
+ERROR: pkg/kubelet/prober/prober_manager.go:221:12: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 				logger.V(8).Error(nil, ""Liveness probe already exists for container"",
+ERROR: 				       ^
+ERROR: pkg/kubelet/stats/cri_stats_provider.go:168:10: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 		logger.V(5).Error(err,
+ERROR: 		       ^
+ERROR: pkg/kubelet/stats/helper.go:502:10: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 		logger.V(6).Error(err, ""Unable to fetch pod log stats"", ""pod"", klog.KRef(podNs, podName))
+ERROR: 		       ^
+ERROR: pkg/kubelet/stats/helper.go:510:10: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 		logger.V(6).Error(err, ""Unable to fetch pod etc hosts stats"", ""pod"", klog.KRef(podNs, podName))
+ERROR: 		       ^
+ERROR: pkg/kubelet/volumemanager/cache/desired_state_of_world.go:673:9: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 	logger.V(4).Error(err, ""Please report this error in https://github.com/kubernetes/enhancements/issues/1710, together with full Pod yaml file"")
+ERROR: 	       ^
+ERROR: pkg/kubelet/volumemanager/cache/desired_state_of_world.go:688:10: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 		logger.V(4).Error(err, ""failed to get CSI driver name from volume spec"")
+ERROR: 		       ^
+ERROR: pkg/kubelet/volumemanager/reconciler/reconstruct.go:188:10: V().Error ignores the verbosity and always logs. Use only Error if that is desired, otherwise V().Info(..., ""err"", err). (logcheck)
+ERROR: 		logger.V(4).Error(fetchErr, ""Failed to get Node status to reconstruct device paths"")
+ERROR: 		       ^
+```
+```"
+kubernetes/kubernetes,136028,3711464221,pohly,2026-01-05T17:49:07Z,"I don't know how SIG Node wants to split the fixes up, but IMHO all kubelet changes can be in one PR.
+"
+kubernetes/kubernetes,136028,3711470792,pohly,2026-01-05T17:50:41Z,"If someone wants to continue with this, https://github.com/kubernetes-sigs/logtools/pull/32#issuecomment-3711449633 has the complete list of current issues. One PR per SIG probably is the right granularity."
+kubernetes/kubernetes,136028,3711677466,thc1006,2026-01-05T18:49:27Z,"Thank you for the valuable feedback.
+
+Following the suggestion from @pohly regarding the logtools linter findings, I have expanded this PR to address all V().Error() instances in the kubelet package (excluding volumemanager, which will be submitted separately due to different OWNERS).
+
+Summary of changes:
+- prober/ (4 instances) - previously submitted
+- lifecycle/handlers.go (4 instances)
+- kuberuntime/kuberuntime_container_linux.go (2 instances)
+- pleg/generic.go (1 instance)
+- allocation/allocation_manager.go (1 instance)
+- stats/helper.go, cri_stats_provider.go (3 instances)
+- cm/devicemanager, cm/dra (2 instances)
+- metrics/collectors/cri_metrics.go (1 instance)
+
+Total: 18 instances across 11 files.
+
+I would be grateful for your review when you have time."
+kubernetes/kubernetes,136028,3711681566,dims,2026-01-05T18:50:48Z,/assign @thockin 
+kubernetes/kubernetes,136028,3712736014,HirazawaUi,2026-01-06T01:26:59Z,"> I don't know how SIG Node wants to split the fixes up, but IMHO all kubelet changes can be in one PR.
+
+@pohly  I initially also intended to fix this issue by SIG. However, after examining the code, I found that some fixes need to be cherry-picked back to the version where the error was introduced, while others do not—because some have already caused actual user experience issues, whereas others do not affect users.
+
+Therefore, I suggest that contributors split PRs based on whether they believe a cherry-pick is required (while ensuring PRs do not cross SIG boundaries).
+
+Please refer to: https://github.com/kubernetes/kubernetes/issues/136027#issuecomment-3709976482
+
+But you are more familiar with this domain than I am.
+
+Do you think all fixes should be cherry-picked?"
+kubernetes/kubernetes,136028,3713436751,pohly,2026-01-06T07:10:05Z,"I would fix master by SIG and then determine during cherry-picking which individual lines really need to be updated on the target branch, while manually resolving the merge conflicts.
+
+Deciding upfront which individual line needs to be cherry-picked is going to be fragile. It may even depend on the different target branches.
+"
+kubernetes/kubernetes,136028,3715030300,thc1006,2026-01-06T14:59:49Z,"@pohly
+
+Thank you very much for your detailed review and valuable guidance.
+
+**TL;DR:** I have addressed the feedback in the latest commit.
+
+Regarding the `kubelet.go` change (discussion r2664594070):
+- Removed the anonymous function wrapper pattern entirely
+- Replaced with direct conditional branching using `klog.V(4).InfoS()` when runtime ready is not expected
+- This resolves the stack unwinding issue you pointed out
+
+I would be most grateful if you could kindly review the changes at your convenience."
+kubernetes/kubernetes,136028,3715085789,HirazawaUi,2026-01-06T15:15:09Z,"> I would fix master by SIG and then determine during cherry-picking which individual lines really need to be updated on the target branch, while manually resolving the merge conflicts.
+
+Alright, let me split these PRs by SIG, which, in fact, we have already done, and selectively cherry-pick parts of the PRs into the branches that introduced these issues (if we do need to cherry-pick selectively)."
+kubernetes/kubernetes,136028,3715088939,HirazawaUi,2026-01-06T15:16:04Z,"@thc1006 
+
+1. Please update the PR title, as its scope has now been expanded to cover the entire kubelet directory.
+
+2. It appears that you did not correctly follow the PR template. The current PR description seems AI-generated; please restore the template properly and fill in the required sections.
+
+3. You need to add a release note for this PR."
+kubernetes/kubernetes,136028,3715090714,thc1006,2026-01-06T15:16:34Z,"> @thc1006
+> 
+> 1. Please update the PR title, as its scope has now been expanded to cover the entire kubelet directory.
+> 2. It appears that you did not correctly follow the PR template. The current PR description seems AI-generated; please restore the template properly and fill in the required sections.
+> 3. You need to add a release note for this PR.
+
+Roger!"
+kubernetes/kubernetes,136028,3715164206,thc1006,2026-01-06T15:36:42Z,"Hi @HirazawaUi,
+
+Thank you for your review feedback! I've made the following updates:
+
+1. **PR Title** - Updated to reflect the full kubelet scope
+2. **PR Description** - Restored the template format with all required sections
+3. **Release Note** - Added in the description
+4. **Additional fixes** - Added 3 missing instances in `volumemanager/` (identified from @pohly's linter output)
+
+The PR now covers all 21 instances across 15 files in the kubelet package.
+
+Could you please help remove the `release-note-none` label? Or feel free to let me know if there's anything else that needs to be addressed.
+
+Thanks again for your guidance!"
+kubernetes/kubernetes,136028,3718610341,HirazawaUi,2026-01-07T12:18:45Z,/ok-to-test
+kubernetes/kubernetes,136028,3718862571,thc1006,2026-01-07T13:22:00Z,"Thank you @HirazawaUi for the review feedback!
+
+I've removed the changes to `pkg/kubelet/images/pullmanager/metrics.go` to avoid conflicts with #135992.
+
+Commit: bc1f551db51"
+kubernetes/kubernetes,136028,3718862757,thc1006,2026-01-07T13:22:03Z,/retest-required
+kubernetes/kubernetes,136028,3719251356,thc1006,2026-01-07T14:56:00Z,/retest-required
+kubernetes/kubernetes,136028,3763921202,thc1006,2026-01-17T14:29:31Z,"Hi reviewers,
+
+I have rebased this PR onto the latest master branch. During the rebase, I resolved conflicts by accepting the upstream changes for the following files:
+
+1. `pkg/kubelet/kubelet.go`: The upstream version already includes a cleaner fix using contextual logging with `loggerInfo = logger.V(4).Info`, which achieves the same verbosity aware behavior. Therefore, this file is no longer included in this PR.
+
+2. `pkg/kubelet/images/pullmanager/metrics.go`: As previously discussed with @HirazawaUi, this file was removed to avoid conflicts with PR #135992.
+
+The PR now contains 2 commits modifying 13 files, all performing the intended `V(N).Error()` to `V(N).Info()` conversion to respect verbosity levels.
+
+@SergeyKanzhelev @mrunalp Could you please take a look when you have time? Thank you for your patience.
+
+/retest"
+kubernetes/kubernetes,136028,3765206995,k8s-ci-robot,2026-01-18T11:47:47Z,LGTM label has been added.  <details>Git tree hash: c5f4dd6570ed8ace0c3c0dceb039577213dc5b3d</details>
+kubernetes/kubernetes,136028,3765207025,HirazawaUi,2026-01-18T11:47:49Z,/retest
+kubernetes/kubernetes,136028,3781427485,SergeyKanzhelev,2026-01-21T22:24:03Z,"/lgtm
+/approve"
+kubernetes/kubernetes,136028,3781428394,k8s-ci-robot,2026-01-21T22:24:21Z,"[APPROVALNOTIFIER] This PR is **APPROVED**
+
+This pull-request has been approved by: *<a href=""https://github.com/kubernetes/kubernetes/pull/136028#issuecomment-3781427485"" title=""Approved"">SergeyKanzhelev</a>*, *<a href=""https://github.com/kubernetes/kubernetes/pull/136028#"" title=""Author self-approved"">thc1006</a>*
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubernetes%2Fkubernetes).
+
+The pull request process is described [here](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process)
+
+<details >
+Needs approval from an approver in each of these files:
+
+- ~~[pkg/kubelet/OWNERS](https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/OWNERS)~~ [SergeyKanzhelev]
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={""approvers"":[]} -->"
+kubernetes/kubernetes,136028,3781549737,thc1006,2026-01-21T23:08:59Z,/retest
+kubernetes/kubernetes,136028,3783543502,HirazawaUi,2026-01-22T10:03:10Z,"@thc1006, would you mind cherry-picking the changes from this PR into the branch where they were originally introduced?"
+kubernetes/kubernetes,136028,3785233652,thc1006,2026-01-22T16:05:54Z,"@HirazawaUi Thank you for the reminder!
+
+I've analyzed all 13 files modified in this PR across the release branches. Here's the summary:
+
+| Branch | Files with Bug | Notes |
+|--------|---------------|-------|
+| release-1.35 | 13 files | All files affected |
+| release-1.34 | 13 files | All files affected |
+| release-1.33 | 12 files | `dra_plugin_manager.go` not affected (V().Error was introduced in 1.34) |
+
+I will create cherry-pick PRs for the currently maintained versions:
+
+/cherry-pick release-1.35"
+kubernetes/kubernetes,136028,3785234245,thc1006,2026-01-22T16:06:01Z,/cherry-pick release-1.34
+kubernetes/kubernetes,136028,3785234474,thc1006,2026-01-22T16:06:04Z,/cherry-pick release-1.33
+kubernetes/kubernetes,136028,3785378875,pohly,2026-01-22T16:35:18Z,"That command doesn't work in the k/k repo. You have to use this script: https://github.com/kubernetes/kubernetes/blob/master/hack/cherry_pick_pull.sh, docs in https://git.k8s.io/community/contributors/devel/sig-release/cherry-picks.md"
+kubernetes/kubernetes,136028,3786798571,ffromani,2026-01-22T21:36:19Z,"just asking, does this work qualify for backport? do we deem this a regression AND one worth a backport? [EDIT] to clarify: I don't have strong opinions in either direction, just trying to reconcile in my head with the backport process
+
+Answering myself, I guess violating https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md#what-method-to-use and causing eccessive logging can be considered a regression, therefore (tangential thought) this also means we should probably pay more attention to new log calls in PR review "
+kubernetes/kubernetes,136028,3788660389,pohly,2026-01-23T07:06:58Z,"Yes, log spam is a regression and qualifies for backporting.
+
+For detecting log spam pro-actively there is https://github.com/kubernetes/kubernetes/issues/109297, but it's stuck on defining what exactly ""log spam"" is."
+kubernetes/kubernetes,136207,3746733002,nvrohanv,2025-12-16T06:26:59Z,/sig scheduling
+kubernetes/kubernetes,136207,3746733016,romanbaron,2025-12-18T09:07:49Z,"An additional limitation of the current implementation is the lack of determinism around which pods within a PodGroup are scheduled. In leader–worker workloads that create more pods than the gang requirement (numPods > minCount), there is no mechanism to ensure that a leader pod is scheduled alongside workers, creating a risk where only worker pods are running without a corresponding leader. This situation can occur when the LWS size exceeds `minCount`."
+kubernetes/kubernetes,136207,3746733024,ahg-g,2025-12-19T04:04:27Z,"> Multi-node case (e.g., LeaderWorkerSet or Grove PodCliqueScalingGroup): If I have an LWS as a PodGroup where each replica consists of multiple pods, the controller is expected to assign each pod a podGroupReplicaKey to distinguish replicas. In this case, minCount represents how many pods within a single LWS replica need to be scheduled - not how many LWS replicas need to be scheduled.
+
+This is surprising to me, are you sure that this is the case? FYI @erictune @wojtek-t @Edwinhr716; when we discussed minCount in the context of LWS, the intent was for it to represent the minimum number of pods within an LWS ""replica""."
+kubernetes/kubernetes,136207,3746733036,nvrohanv,2025-12-19T07:14:52Z,"@ahg-g I'm a bit confused, I believe 
+
+> the intent was for it to represent the minimum number of pods within an LWS ""replica"".
+
+is exactly what I am saying is the case and also the problem. With minCount being structured this way, as @romanbaron pointed out you have a flaw in that you might get workers but no leader if minCount is less than the LWS size (something that will come up with additions of elastic ep into vllm coming soon). Additionally as I was pointing out in the issue you now have different semantics for what minCount represents at the application level depending on if you are single-node/Deployment or multi-node/LWS. In the LWS inference case where each LWS replica represents a model you have no way to say give me a minimum of `x` models or none. 
+
+Happy to have a proper discussion on a call since we might be mixing up concepts over chat/github. 
+"
+kubernetes/kubernetes,136207,3746733047,macsko,2025-12-19T08:04:07Z,cc @wojtek-t @dom4ha
+kubernetes/kubernetes,136207,3746733060,ahg-g,2025-12-19T18:44:56Z,"> is exactly what I am saying is the case and also the problem. With minCount being structured this way, as @romanbaron pointed out you have a flaw in that you might get workers but no leader if minCount is less than the LWS size (something that will come up with additions of elastic ep into vllm coming soon). Additionally as I was pointing out in the issue you now have different semantics for what minCount represents at the application level depending on if you are single-node/Deployment or multi-node/LWS. In the LWS inference case where each LWS replica represents a model you have no way to say give me a minimum of x models or none.
+
+There are multiple issues here, lets split them:
+
+1) On gang scheduling semantics for LWS vs Deployment. The Workload api doesn't specify how gang scheduling is applied to a specific ""deployment"" api (LWS, Deployment, StatefulSet etc.), it is more about how one sets the selectors. If one sets the selectors to define a gang as pods in a Deployment, then that Deployment's pods will be gang scheduled. For cases like LWS, which defines groups of pods as replicas, then the workload api also gives the ability to define ""replicated gangs"". So I don't believe there is inconsistency.
+
+2) On minCount, this is specific to gang scheduling of pods (pods specifically, not ""replicas"", as in not LWS replicas, only pods within the gang) that should be scheduled in an all-or-nothing manner. Management of individual replicas, whether the replica is a group of pods (in LWS case) or individual pods (in Deployment case), is a separate matter from gang scheduling. 
+
+3) On minCount and the lack of guarantees for the leader, I indeed think this is a gap, but it should be possible to amend the api 
+to take this case into account. Great catch!
+
+4) On managing groups of replicas (for example at least x prefill and y decode), whether a replica is a pod or a group of pods, this is not looked at as a gang-scheduling (all-or-nothing) problem per se; k8s has an API called PodDisruptionBudget (PDB), admittedly the name is legacy and is focused on Pods, but there is an effort to change that to give it ""Replica Disruption Budget"" semantics so that we can apply the concept on application apis like LWS. However, as you mention in the second gap, I agree that we should revisit this and discuss if scheduling policies across replicas is a concept that we want to bring to the new Workload api, keep it in PDB or propose a third api.   
+
+  The current gang-scheduling capability in the workload api (which again is pod-centric) covers some of this for the single-node case only because for single-node a replica is a pod, not because it is intentionally trying to support it for single-node and not for multi-node."
+kubernetes/kubernetes,136207,3746733074,ahg-g,2025-12-19T19:16:54Z,"Just to summarize my thoughts, I am aligned on addressing the two gaps, specifically: 
+
+1) Allow specifying that the leader in a gang is a must to schedule even when a minCount is set
+2) Defining inter-replica scheduling policies, whether by expanding the workload api to capture those policies or via PDB"
+kubernetes/kubernetes,136207,3746733099,kannon92,2025-12-19T21:02:47Z,"kubernetes/enhancements#5547 
+
+There is at least a design doc floating around on how workload objects can consume these objects. Maybe its worth looking over that design to see."
+kubernetes/kubernetes,136207,3746733112,kannon92,2025-12-19T21:23:26Z,"@andreyvelich also brings up this point on JobSet and KubeFlow.
+
+There is usecase for having an initialed job be scheduled once and then the leader/worker are a separate gang."
+kubernetes/kubernetes,136207,3746733123,andreyvelich,2025-12-22T16:26:52Z,"Yes, we briefly discussed it here: https://github.com/kubernetes/enhancements/pull/5711#discussion_r2633284301
+
+I would imagine similar constraints might apply if we talk about multi-sequence jobs which should not be scheduled as a single unit."
+kubernetes/kubernetes,136207,3746733212,lmktfy,2025-12-26T20:13:36Z,"This itself isn't a KEP.
+
+We might want to transfer it to k/k (Prow command `/transfer kubernetes`)"
+kubernetes/kubernetes,136207,3746733222,ZiMengSheng,2025-12-30T12:18:31Z,"> An additional limitation of the current implementation is the lack of determinism around which pods within a PodGroup are scheduled. In leader–worker workloads that create more pods than the gang requirement (numPods > minCount), there is no mechanism to ensure that a leader pod is scheduled alongside workers, creating a risk where only worker pods are running without a corresponding leader. This situation can occur when the LWS size exceeds `minCount`.
+
+Great catch! Just out of curiosity, what are the practical scenarios for LWS size > min?"
+kubernetes/kubernetes,136207,3746733229,nvrohanv,2025-12-31T18:09:05Z,"@ZiMengSheng, inference frameworks are moving toward elastic-EP, where a failure of one or more GPUs within a replica does not bring down the entire replica. Instead, the system continues operating in a degraded mode.
+
+Viewed this way, the end user is explicitly accepting some level of performance degradation in exchange for higher availability. Under this model, it also makes sense to configure LWS size > min, allowing the scheduler to potentially place additional replicas even if some are running in a degraded state."
+kubernetes/kubernetes,136207,3746733235,k8s-ci-robot,2026-01-13T21:53:03Z,"This issue is currently awaiting triage.
+
+If a SIG or subproject determines this is a relevant issue, they will accept it by applying the `triage/accepted` label and provide further guidance.
+
+The `triage/accepted` label can be added by org members by writing `/triage accepted` in a comment.
+
+
+<details>
+
+Instructions for interacting with me using PR comments are available [here](https://git.k8s.io/community/contributors/guide/pull-requests.md).  If you have questions or suggestions related to my behavior, please file an issue against the [kubernetes-sigs/prow](https://github.com/kubernetes-sigs/prow/issues/new?title=Prow%20issue:) repository.
+</details>"
+kubernetes/kubernetes,136207,3746733355,romanbaron,2026-01-06T14:39:14Z,"> This itself isn't a KEP.
+
+What are the proposed next steps, and how do we translate this into an actionable plan? If opening a KEP is the appropriate next phase, I would be glad to take that on."
+kubernetes/kubernetes,136207,3746733362,helayoty,2026-01-12T21:56:48Z,How about moving this to k/k as an issue and keep documenting other feedback?
+kubernetes/kubernetes,136207,3746733379,romanbaron,2026-01-13T14:48:54Z,/transfer kubernetes
+kubernetes/kubernetes,136207,3746733392,k8s-ci-robot,2026-01-13T14:49:04Z,"@romanbaron: You must be an org member to transfer this issue.
+
+<details>
+
+In response to [this](https://github.com/kubernetes/kubernetes/issues/136207#issuecomment-3746733379):
+
+>/transfer kubernetes
+
+
+Instructions for interacting with me using PR comments are available [here](https://git.k8s.io/community/contributors/guide/pull-requests.md).  If you have questions or suggestions related to my behavior, please file an issue against the [kubernetes-sigs/prow](https://github.com/kubernetes-sigs/prow/issues/new?title=Prow%20issue:) repository.
+</details>"
+kubernetes/kubernetes,136207,3746733406,helayoty,2026-01-13T21:52:53Z,/transfer kubernetes
+kubernetes/kubernetes,136207,3751924951,kannon92,2026-01-14T22:06:16Z,"In a meeting earlier this week, it seems that WideEP or PD use cases may end up having multiple LWS that are scheduled together. It isn't as clear to me if there is any kind of API/workload controller that does this though. So one option mentioned was that users could provide a Workload API for this kind of workload. 
+
+I know that LWS has some work going on in enforcing gang scheduling at LWS level but just wanted to call out that there also seems to be requests to have multiple LWS be scheduled together too. 
+
+Do we have some examples on what gang semantic you expect?
+
+I was playing around with enabling GangScheduling in for JobSet via https://github.com/kubernetes-sigs/jobset/pull/1111/files#diff-91a890b2e19de37a5875a7be7bc5a1a506bae151e76012d0aa71f7c323977ab0.
+
+It seems in your case you are saying that you want leader and worker to be a gang. But potentially the workers are more fungible (can trim a few and things still work) but the leader cannot be destroyed otherwise everything is hosed.
+
+You can provision a kind cluster to try out the Gang scheduling feature to get a better idea of what you need to propose:
+
+```yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+featureGates:
+  GenericWorkload: true
+  GangScheduling: true
+
+containerdConfigPatches:
+# Enable CDI as described in
+# https://tags.cncf.io/container-device-interface#containerd-configuration
+- |-
+  [plugins.""io.containerd.grpc.v1.cri""]
+    enable_cdi = true
+nodes:
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: ClusterConfiguration
+    apiServer:
+      extraArgs:
+        runtime-config: ""api/alpha=true""
+    scheduler:
+        extraArgs:
+          v: ""1""
+    controllerManager:
+        extraArgs:
+          v: ""1""
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        v: ""1""
+- role: worker
+  kubeadmConfigPatches:
+  - |
+    kind: JoinConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        v: ""1""
+
+```"
+kubernetes/kubernetes,136207,3755871505,kannon92,2026-01-15T16:53:15Z,"https://github.com/kubernetes/enhancements/pull/5711
+
+Some of this feels like you are more concerned with disruption of leader.
+
+If I understand correctly you want the leader and worker to be scheduled together but when preemption/disruption happens you want to make sure workers are pruned over leaders."
+kubernetes/kubernetes,136207,3756104505,romanbaron,2026-01-15T17:44:06Z,"It is both, actually. When a workload uses a leader-worker pattern, not all pods are equal. The leader pod has to be one of the running pods, or the workers will not be able to make any progress. This needs to be taken into account both when pods are scheduled and when they are preempted (assuming partial preemption)."
+kubernetes/kubernetes,136207,3760450690,kannon92,2026-01-16T15:04:41Z,"It seems to me that the requirement here is that both leader/worker need to be scheduled together. Maybe you don't need as much workers but the leader is a must. I guess the main issue would be that you need ordering in the scheduling phase so that if you combine leader-worker in the same PodGroup you have to make MinCount equal the sum of leader and worker so you guarantee that both are scheduled.
+
+This is subpar experience if you are okay with having not all workers scheduled (MinCount < leader + worker) but then you can't guarantee that the leader schedules.
+
+And then you have a separate problem for premeption where you want the workers preempted over the leader. I wonder if @wojtek-t design for preemption allows for pods to have different priorities within a workload. I also am curious if you can add a priority for the leader to be critical so its preempted last.  "
+kubernetes/kubernetes,136207,3773004073,mm4tt,2026-01-20T13:54:28Z,"Hey Folks, please take a look at this document - https://docs.google.com/document/d/1B3kLWh_U1a2g-VQ6ExokMjmb7pA8lGkF9MafSSg3JmQ/edit?tab=t.0
+
+Specifically, Part 2 shows evolution of the API that may addresses the gaps identified in this issue."
+kubernetes/kubernetes,136207,3791919776,helayoty,2026-01-23T19:19:07Z,/cc
+kubernetes/kubernetes,136207,3793748867,Edwinhr716,2026-01-24T04:15:56Z,"> The leader pod has to be one of the running pods, or the workers will not be able to make any progress
+
+Expanding on this, in the case where minCount < leader + worker, and the leader pod is deleted as part of the preemption, this causes the worker statefulset to be deleted by the garbage collector since the leader pod is the owner. Basically forcing the whole replica to be restarted and go through scheduling again."
+kubernetes/kubernetes,136207,3798156613,nvrohanv,2026-01-26T07:04:08Z,"> Hey Folks, please take a look at this document - https://docs.google.com/document/d/1B3kLWh_U1a2g-VQ6ExokMjmb7pA8lGkF9MafSSg3JmQ/edit?tab=t.0
+> 
+> Specifically, Part 2 shows evolution of the API that may addresses the gaps identified in this issue.
+
+Read through it, yes the last part on potential extensions mentions some of the gaps above (specifically gang of gangs and topology, but not the issue we've mentioned with LWS). Is there any way to get involved in the designs of these extensions and begin planning for them?"
+kubernetes/kubernetes,136207,3798422208,dom4ha,2026-01-26T08:34:36Z,"> > The leader pod has to be one of the running pods, or the workers will not be able to make any progress
+> 
+> Expanding on this, in the case where minCount < leader + worker, and the leader pod is deleted as part of the preemption, this causes the worker statefulset to be deleted by the garbage collector since the leader pod is the owner. Basically forcing the whole replica to be restarted and go through scheduling again.
+
+This part should be addressed by gang of gangs. For now the assumption is that heterogenous groups use minCount == created number of pods, but homogenous pods can use minCount < the actual count. Regarding preemption, in the current KEP there are preemption policies allowing to define how it should be preempted: https://github.com/kubernetes/enhancements/pull/5711"
+kubernetes/kubernetes,136207,3798609204,nvrohanv,2026-01-26T09:22:43Z,"> > > The leader pod has to be one of the running pods, or the workers will not be able to make any progress
+> > 
+> > 
+> > Expanding on this, in the case where minCount < leader + worker, and the leader pod is deleted as part of the preemption, this causes the worker statefulset to be deleted by the garbage collector since the leader pod is the owner. Basically forcing the whole replica to be restarted and go through scheduling again.
+> 
+> This part should be addressed by gang of gangs. For now the assumption is that heterogenous groups use minCount == created number of pods, but homogenous pods can use minCount < the actual count. Regarding preemption, in the current KEP there are preemption policies allowing to define how it should be preempted: [kubernetes/enhancements#5711](https://github.com/kubernetes/enhancements/pull/5711)
+
+I agree that this should ultimately be addressed by a gang-of-gangs abstraction, but I am concerned that an initial implementation may not fully meet the requirements. A natural first approach to gang-of-gangs is to treat each component (e.g., prefill-leader, prefill-worker, decode-leader, decode-worker) as contributing to a single top-level gang with a set of aggregate minCount constraints (for example, at least one prefill leader and one group of three prefill workers), while still maintaining the existing per-component minCount semantics (e.g., prefill workers scheduled in groups of three).
+
+While this model is sufficient for initial placement, it becomes limiting once scaling is introduced. In particular, it does not provide a clear way to express which components must be gang-scheduled together versus which can scale independently. For example, when scaling both prefill and decode, we typically want prefill leaders and prefill workers to be scheduled as a unit, without being blocked by an inability to schedule additional decode leaders. A flat top-level gang constraint risks coupling unrelated components during scaling, leading to unnecessary scheduling stalls.
+
+ Aside: The difficulties of concisely and clearly encoding these types of constraints while retaining familiar k8s workflows like scaling and rolling updates into resources like Deployment or LeaderWorkerSet are why we built Grove, but Grove is fundamentally still an intent-layer. To be able to provide the full functionality using default kube-scheduler it would need Workload API to support richer semantics around gang-scheduling and eventually topology aware scheduling."
+kubernetes/kubernetes,136207,3801308678,Edwinhr716,2026-01-26T19:19:13Z,"> While this model is sufficient for initial placement, it becomes limiting once scaling is introduced. In particular, it does not provide a clear way to express which components must be gang-scheduled together versus which can scale independently.
+
+There's an ongoing discussion here: https://docs.google.com/document/d/1B3kLWh_U1a2g-VQ6ExokMjmb7pA8lGkF9MafSSg3JmQ/edit?disco=AAABvAx4eTg. Isn't this solved by the gang-of-gangs abstraction if we have minCount at the SubGroup level? 
+
+You essentially have a PodGroup which contains a prefill subgroup and a decode subgroup. If you set the minCount to 1 in both, you are saying that there must always be at least 1 prefill and 1 decode, but you don't care if there's more of each subgroup. So if prefill scales up, there isn't a blocker for scheduling since the decode subgroup already meets the minCount criteria."
+kubernetes/kubernetes,135725,3643400715,k8s-ci-robot,2025-12-11T19:12:54Z,"Please note that we're already in [Test Freeze](https://github.com/kubernetes/sig-release/blob/master/releases/release_phases.md#test-freeze) for the `release-1.35` branch. This means every merged PR will be automatically fast-forwarded via the periodic [ci-fast-forward](https://testgrid.k8s.io/sig-release-releng-blocking#git-repo-kubernetes-fast-forward) job to the release branch of the upcoming v1.35.0 release.
+
+Fast forwards are scheduled to happen every 6 hours, whereas the most recent run was: Thu Dec 11 15:40:23 UTC 2025."
+kubernetes/kubernetes,135725,3646112879,bart0sh,2025-12-12T11:32:18Z,/cc @pohly 
+kubernetes/kubernetes,135725,3657226974,bart0sh,2025-12-15T19:24:04Z,/retest
+kubernetes/kubernetes,135725,3657544665,bart0sh,2025-12-15T20:46:19Z,"/assign @yliaog 
+for review"
+kubernetes/kubernetes,135725,3659339120,bart0sh,2025-12-16T08:19:43Z,/test pull-kubernetes-kind-dra-all
+kubernetes/kubernetes,135725,3659583279,bart0sh,2025-12-16T09:24:15Z,/test pull-kubernetes-kind-dra-all
+kubernetes/kubernetes,135725,3661344677,bart0sh,2025-12-16T16:17:00Z,/test pull-kubernetes-kind-dra-all
+kubernetes/kubernetes,135725,3661642989,bart0sh,2025-12-16T17:30:27Z,"/test pull-kubernetes-kind-dra-all-slow
+/test pull-kubernetes-kind-dra-n-1
+/test pull-kubernetes-kind-dra-n-2
+/test pull-kubernetes-kind-dra-n-3
+/test pull-kubernetes-dra-integration
+/test pull-kubernetes-node-e2e-crio-dra
+/test pull-kubernetes-node-e2e-containerd-2-0-dra
+/test pull-kubernetes-node-e2e-containerd-2-0-dra-alpha-beta-features"
+kubernetes/kubernetes,135725,3661652304,bart0sh,2025-12-16T17:33:07Z,/test pull-kubernetes-node-e2e-containerd
+kubernetes/kubernetes,135725,3662273059,bart0sh,2025-12-16T20:31:58Z,"/test pull-kubernetes-kind-dra-all
+/test pull-kubernetes-kind-dra-all-slow
+/test pull-kubernetes-kind-dra-n-1
+/test pull-kubernetes-kind-dra-n-2
+/test pull-kubernetes-kind-dra-n-3
+/test pull-kubernetes-dra-integration
+/test pull-kubernetes-node-e2e-crio-dra
+/test pull-kubernetes-node-e2e-containerd-2-0-dra
+/test pull-kubernetes-node-e2e-containerd-2-0-dra-alpha-beta-features"
+kubernetes/kubernetes,135725,3662274368,bart0sh,2025-12-16T20:32:25Z,/test pull-kubernetes-unit-windows-master
+kubernetes/kubernetes,135725,3662595992,yliaog,2025-12-16T21:59:36Z,"the PR description below needs to be adjusted:
+
+In kubelet admission:
+   - Only remove extended resources from pod requirements if they are NOT
+     backed by DRA and Device Plugins
+     not present in node's allocatable resources"
+kubernetes/kubernetes,135725,3662596833,yliaog,2025-12-16T21:59:55Z,"/lgtm
+
+thanks for the fix"
+kubernetes/kubernetes,135725,3662597149,k8s-ci-robot,2025-12-16T22:00:02Z,LGTM label has been added.  <details>Git tree hash: 378c48e1067444ef1b15e3d847671d78bfc8015a</details>
+kubernetes/kubernetes,135725,3664051168,bart0sh,2025-12-17T07:34:02Z,"/assign @pohly @klueska @macsko 
+for approval"
+kubernetes/kubernetes,135725,3664070808,bart0sh,2025-12-17T07:41:43Z,"> the PR description below needs to be adjusted:
+
+Done, thanks for pointing out!"
+kubernetes/kubernetes,135725,3666639884,haircommander,2025-12-17T18:31:22Z,"/triage accepted
+/priority important-soon"
+kubernetes/kubernetes,135725,3672146347,bart0sh,2025-12-18T20:43:17Z,/retest
+kubernetes/kubernetes,135725,3672239670,bart0sh,2025-12-18T21:12:21Z,"@yliaog @pohly @macsko 
+rebased, PTAL, thanks!"
+kubernetes/kubernetes,135725,3697288908,yliaog,2025-12-29T19:09:25Z,/lgtm
+kubernetes/kubernetes,135725,3697289184,k8s-ci-robot,2025-12-29T19:09:33Z,LGTM label has been added.  <details>Git tree hash: f7a38a668075aab26e90c84d392a5c1515c54cce</details>
+kubernetes/kubernetes,135725,3697426930,pohly,2025-12-29T20:18:39Z,"If this is a bug fix, then we need a user-facing release note for this PR.
+"
+kubernetes/kubernetes,135725,3698988459,bart0sh,2025-12-30T10:48:23Z,"> If this is a bug fix, then we need a user-facing release note for this PR.
+
+Done, thanks for pointing out!"
+kubernetes/kubernetes,135725,3699816005,bart0sh,2025-12-30T16:10:21Z,/retest
+kubernetes/kubernetes,135725,3700142746,bart0sh,2025-12-30T18:31:35Z,/skip
+kubernetes/kubernetes,135725,3700176294,yliaog,2025-12-30T18:51:11Z,/lgtm
+kubernetes/kubernetes,135725,3700176492,k8s-ci-robot,2025-12-30T18:51:18Z,LGTM label has been added.  <details>Git tree hash: 0febd434160888cdaa5d2108d369d2f77de17540</details>
+kubernetes/kubernetes,135725,3702767273,bart0sh,2025-12-31T19:36:14Z,/skip
+kubernetes/kubernetes,135725,3705277820,bart0sh,2026-01-02T13:01:17Z,"/retest
+/skip"
+kubernetes/kubernetes,135725,3705472158,macsko,2026-01-02T14:28:31Z,"/lgtm
+/approve
+For scheduler"
+kubernetes/kubernetes,135725,3705472390,k8s-ci-robot,2026-01-02T14:28:38Z,LGTM label has been added.  <details>Git tree hash: eb4414d6dc8f5a0f10ae125af9c7e0ab2049d586</details>
+kubernetes/kubernetes,135725,3705498581,k8s-ci-robot,2026-01-02T14:40:19Z,"@bart0sh: The following test **failed**, say `/retest` to rerun all failed tests or `/retest-required` to rerun all mandatory failed tests:
+
+Test name | Commit | Details | Required | Rerun command
+--- | --- | --- | --- | ---
+pull-kubernetes-unit-windows-master | 882cd022539e7d702fb4853d1dc3d5bf626979fa | [link](https://prow.k8s.io/view/gs/kubernetes-ci-logs/pr-logs/pull/135725/pull-kubernetes-unit-windows-master/2007092453479288832) | false | `/test pull-kubernetes-unit-windows-master`
+
+[Full PR test history](https://prow.k8s.io/pr-history?org=kubernetes&repo=kubernetes&pr=135725). [Your PR dashboard](https://prow.k8s.io/pr?query=is%3Apr%20state%3Aopen%20author%3Abart0sh). Please help us cut down on flakes by [linking to](https://git.k8s.io/community/contributors/devel/sig-testing/flaky-tests.md#filing-issues-for-flaky-tests) an [open issue](https://github.com/kubernetes/kubernetes/issues?q=is:issue+is:open) when you hit one in your PR.
+
+<details>
+
+Instructions for interacting with me using PR comments are available [here](https://git.k8s.io/community/contributors/guide/pull-requests.md).  If you have questions or suggestions related to my behavior, please file an issue against the [kubernetes-sigs/prow](https://github.com/kubernetes-sigs/prow/issues/new?title=Prow%20issue:) repository. I understand the commands that are listed [here](https://go.k8s.io/bot-commands).
+</details>
+<!-- test report -->"
+kubernetes/kubernetes,135725,3705950898,bart0sh,2026-01-02T18:07:53Z,/skip
+kubernetes/kubernetes,135725,3705952208,bart0sh,2026-01-02T18:08:23Z,"/assign @klueska @mrunalp @SergeyKanzhelev 
+for SIG-node review & approval"
+kubernetes/kubernetes,135725,3720757188,k8s-ci-robot,2026-01-07T20:55:36Z,"[APPROVALNOTIFIER] This PR is **APPROVED**
+
+This pull-request has been approved by: *<a href=""https://github.com/kubernetes/kubernetes/pull/135725#"" title=""Author self-approved"">bart0sh</a>*, *<a href=""https://github.com/kubernetes/kubernetes/pull/135725#issuecomment-3705472158"" title=""Approved"">macsko</a>*, *<a href=""https://github.com/kubernetes/kubernetes/pull/135725#pullrequestreview-3636764849"" title=""Approved"">SergeyKanzhelev</a>*
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubernetes%2Fkubernetes).
+
+The pull request process is described [here](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process)
+
+<details >
+Needs approval from an approver in each of these files:
+
+- ~~[pkg/kubelet/OWNERS](https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/OWNERS)~~ [SergeyKanzhelev]
+- ~~[pkg/scheduler/OWNERS](https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/OWNERS)~~ [macsko]
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={""approvers"":[]} -->"
