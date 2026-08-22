@@ -13,7 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Docker congelará esta capa. Si solo cambias código, Docker se salta esta descarga pesada.
 COPY requirements.txt .
 
-# Instalar todas las librerías (PyTorch, Pandas, FastAPI, etc.)
+# Instalar PyTorch versión CPU explícitamente para evitar descargar 4GB de drivers NVIDIA
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# Instalar el resto de las librerías
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar el resto de tu código fuente a la imagen
