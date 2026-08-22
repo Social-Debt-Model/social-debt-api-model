@@ -184,7 +184,9 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                             issues_data[iss_id] = []
                         issues_data[iss_id].append({
                             "code": res["macro_cause_code"],
-                            "is_noise": res["is_noise"]
+                            "is_noise": res["is_noise"],
+                            "cleaned_text": res.get("cleaned_text", ""),
+                            "microcauses": res.get("microcauses", [])
                         })
                     processed += 1
                     

@@ -4,6 +4,7 @@ import time
 import sys
 import os
 import psutil
+import random
 
 # Asegurar que Python pueda encontrar la carpeta "app" desde la carpeta scripts
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -170,10 +171,12 @@ async def run_reduced_dataset_test():
         print(f"RESUMEN DE CLASIFICACIÓN ({total_comments} comentarios procesados)")
         print("=" * 50)
         
-        # Mostrar solo los 3 primeros como ejemplo para no inundar la terminal
-        print("Mostrando los primeros 3 comentarios como muestra:")
-        for i, c in enumerate(comments_results[:3], 1):
-            print(f"\n[Muestra {i}]: '{str(c.get('original_text', ''))[:100]}...'")
+        # Mostrar 3 aleatorios como ejemplo para no inundar la terminal
+        print("Mostrando 3 comentarios aleatorios como muestra:")
+        
+        sample_comments = random.sample(comments_results, min(3, len(comments_results))) if comments_results else []
+        for i, c in enumerate(sample_comments, 1):
+            print(f"\n[Muestra {i}]: '{str(c.get('cleaned_text', ''))[:100]}...'")
             print(f"   - Es Ruido: {c.get('is_noise', False)} ({c.get('noise_level', 'none')})")
             print(f"   - Macrocausa: {c.get('macro_cause_code', 'N/A')} (Confianza: {c.get('confidence', 0)})")
             
@@ -181,7 +184,7 @@ async def run_reduced_dataset_test():
             if mc_list:
                 print("   - Microcausas detectadas:")
                 for mc in mc_list:
-                    print(f"     > [{mc.get('cause_id', '')}] {mc.get('cause_name', '')} (Similitud: {mc.get('similarity', 0):.2f})")
+                    print(f"     > [{mc.get('ontology_id', '')}] {mc.get('cause_name', '')} (Similitud: {mc.get('similarity', 0):.2f})")
             else:
                 print("   - Microcausas detectadas: Ninguna")
         print("\n... (Ocultando los demás comentarios para mantener la consola limpia) ...")
@@ -192,7 +195,8 @@ async def run_reduced_dataset_test():
         
         issues_metrics = result_data.get("issues_metrics", {})
         
-        for i, (issue_id, metrics) in enumerate(list(issues_metrics.items())[:3]):
+        sample_issues = random.sample(list(issues_metrics.items()), min(3, len(issues_metrics))) if issues_metrics else []
+        for i, (issue_id, metrics) in enumerate(sample_issues):
             print(f"\n[Issue #{issue_id}]")
             print(f"   - Total de comentarios evaluados: {metrics.get('comment_count', 0)}")
             print(f"   - Diversidad de Macrocausas: {metrics.get('macro_diversity', 0)}")
