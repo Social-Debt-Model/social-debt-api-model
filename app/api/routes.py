@@ -12,6 +12,7 @@ import time
 from datetime import datetime
 
 from app.domain.schemas import ClassificationRequest, ClassificationResponse
+from pydantic import BaseModel
 from app.use_cases.preprocessing.cleaning import clean_comment_text
 from app.use_cases.preprocessing.noise_filtering import es_hard_noise, es_operational_noise
 from app.use_cases.classification.llm_classifier import predict_macro_cause
@@ -125,6 +126,10 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
     # Usar el bloqueo global para asegurar que solo 1 archivo se procese a la vez
     async with batch_lock:
         try:
+            initial_status = get_job_status(job_id)
+            if initial_status and initial_status.get("status") == "cancelled":
+                return
+                
             results = []
             issues_data = {}
             total = len(df)
@@ -148,6 +153,12 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
             rows = list(df.iterrows())
             
             for i in range(0, total, chunk_size):
+                # Check cancellation at each chunk
+                current_status = get_job_status(job_id)
+                if current_status and current_status.get("status") == "cancelled":
+                    active_job_state["job_id"] = None
+                    return
+                    
                 chunk = rows[i:i + chunk_size]
                 tasks = []
                 
@@ -372,3 +383,27 @@ async def check_openai_limits():
             }
         
         raise HTTPException(status_code=500, detail=f"Failed to fetch OpenAI limits: {str(e)}")
+
+class CancelRequest(BaseModel):
+    job_id: str
+
+@router.post("/classify/batch/cancel")
+async def cancel_batch(req: CancelRequest):
+    """
+    Cancela un trabajo por lotes en progreso o en cola.
+    """
+    status_data = get_job_status(req.job_id)
+    if not status_data:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    current = status_data.get("status")
+    if current in ["completed", "failed", "cancelled"]:
+        return {"message": f"Job is already {current}"}
+        
+    update_job_status(req.job_id, {"status": "cancelled"})
+    
+    # Si este era el trabajo activo, limpiamos el estado global
+    if active_job_state["job_id"] == req.job_id:
+        active_job_state["job_id"] = None
+        
+    return {"message": "Job cancelled successfully"}

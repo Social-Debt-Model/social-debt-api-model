@@ -10,8 +10,21 @@ import random
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.config import settings
+import json
 
 async def run_reduced_dataset_test():
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    dict_path = os.path.join(BASE_DIR, "data/frontend_ontology_dictionary.json")
+    print(f"[DEBUG] Attempting to load dictionary from: {dict_path}")
+    try:
+        with open(dict_path, "r", encoding="utf-8") as f:
+            ontology_dict = json.load(f)
+            macro_causes_dict = ontology_dict.get("macro_causes", {})
+            print(f"[DEBUG] Loaded dictionary with {len(macro_causes_dict)} macro causes.")
+    except Exception as e:
+        print(f"[ERROR] No se pudo cargar el diccionario de ontología: {e}")
+        macro_causes_dict = {}
+
     print("Selecciona el entorno de ejecución:")
     print("1. Local (http://127.0.0.1:8000)")
     print("2. Remoto / VPS Coolify (http://dxeaoppd6tz7tjuus42a8vwb.169.58.105.173.sslip.io)")
@@ -124,9 +137,11 @@ async def run_reduced_dataset_test():
         
         # Polling: Consultar el estado hasta que termine
         print("Consultando estado de progreso (Polling)...")
+        consecutive_errors = 0
         while True:
             try:
                 res = await client.get(f"{settings.API_V1_STR}/classify/batch/{job_id}", timeout=10.0)
+                res.raise_for_status()
                 job_status = res.json()
                 
                 status = job_status.get("status")
@@ -139,9 +154,15 @@ async def run_reduced_dataset_test():
                     print() # Nueva línea al terminar
                     break
                     
+                consecutive_errors = 0 # Resetear contador si hubo éxito
+                
             except Exception as e:
-                print(f"\nError durante el polling: {e}")
-                break
+                consecutive_errors += 1
+                error_msg = str(e) if str(e) else type(e).__name__
+                print(f"\n[Advertencia] Error temporal de red durante el polling ({consecutive_errors}/5): {error_msg}")
+                if consecutive_errors >= 5:
+                    print("Demasiados errores de red consecutivos. Abortando polling.")
+                    break
                 
             await asyncio.sleep(2) # Esperar 2 segundos antes de volver a preguntar
             
@@ -157,8 +178,6 @@ async def run_reduced_dataset_test():
             return
             
         result_data = job_status.get("result", {})
-        
-        import json
         out_file = f"resultado_api_{opcion}.json"
         with open(out_file, "w", encoding="utf-8") as f:
             json.dump(result_data, f, ensure_ascii=False, indent=2)
@@ -178,7 +197,9 @@ async def run_reduced_dataset_test():
         for i, c in enumerate(sample_comments, 1):
             print(f"\n[Muestra {i}]: '{str(c.get('cleaned_text', ''))[:100]}...'")
             print(f"   - Es Ruido: {c.get('is_noise', False)} ({c.get('noise_level', 'none')})")
-            print(f"   - Macrocausa: {c.get('macro_cause_code', 'N/A')} (Confianza: {c.get('confidence', 0)})")
+            macro_code = str(c.get('macro_cause_code', 'N/A')).strip()
+            macro_name = macro_causes_dict.get(macro_code, 'Desconocida')
+            print(f"   - Macrocausa: {macro_code} - {macro_name} (Confianza: {c.get('confidence', 0)})")
             
             mc_list = c.get('microcauses', [])
             if mc_list:
