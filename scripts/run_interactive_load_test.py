@@ -1,7 +1,13 @@
 import asyncio
 import httpx
 import time
+import sys
+import os
 import psutil
+
+# Asegurar que Python pueda encontrar la carpeta "app" desde la carpeta scripts
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from app.core.config import settings
 
 async def run_reduced_dataset_test():
