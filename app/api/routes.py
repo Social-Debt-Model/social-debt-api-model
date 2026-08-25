@@ -182,18 +182,23 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                         processed += 1
                         continue
                         
+                    iss_raw = row.get(issue_col) if issue_col else None
+                    iss_val = None if pd.isna(iss_raw) else (int(iss_raw) if isinstance(iss_raw, (float, int)) and float(iss_raw).is_integer() else str(iss_raw))
+                    
+                    id_raw = row.get("comment_id", row.get("id"))
+                    id_val = None if pd.isna(id_raw) else (int(id_raw) if isinstance(id_raw, (float, int)) and float(id_raw).is_integer() else str(id_raw))
+
                     row_dict = {
-                        "issue_number": row.get(issue_col) if issue_col else None,
-                        "comment_id": row.get("comment_id", row.get("id"))
+                        "issue_number": iss_val,
+                        "comment_id": id_val
                     }
                     row_dict.update(res)
                     results.append(row_dict)
                     
-                    if issue_col:
-                        iss_id = row[issue_col]
-                        if iss_id not in issues_data:
-                            issues_data[iss_id] = []
-                        issues_data[iss_id].append({
+                    if iss_val is not None:
+                        if iss_val not in issues_data:
+                            issues_data[iss_val] = []
+                        issues_data[iss_val].append({
                             "code": res["macro_cause_code"],
                             "is_noise": res["is_noise"],
                             "cleaned_text": res.get("cleaned_text", ""),
