@@ -284,6 +284,24 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
     if not text_col:
         raise HTTPException(status_code=400, detail="Could not find a text column")
         
+    # Verificar límites de OpenAI antes de aceptar el archivo
+    limits_response = await check_openai_limits()
+    if limits_response.get("status") == "rate_limit_exceeded":
+        raise HTTPException(status_code=429, detail="Cuota de OpenAI agotada o límite excedido. Intenta más tarde.")
+        
+    limits = limits_response.get("limits", {})
+    rem_req_str = limits.get("remaining_requests", "0")
+    try:
+        rem_req = int(rem_req_str)
+    except:
+        rem_req = 0
+        
+    if len(df) > rem_req:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"El archivo tiene {len(df)} comentarios, pero tu cuota actual de OpenAI solo permite {rem_req} peticiones más en este momento."
+        )
+        
     # Buscar la columna del issue (coincidencia parcial)
     issue_keywords = ['issue_number', 'issue', 'ticket', 'issue_id']
     issue_col = next((col for col in df.columns if any(kw in col.lower() for kw in issue_keywords)), None)
