@@ -10,6 +10,7 @@ import string
 import asyncio
 import time
 from datetime import datetime
+import base64
 
 from app.domain.schemas import ClassificationRequest, ClassificationResponse
 from pydantic import BaseModel
@@ -28,6 +29,17 @@ os.makedirs(JOBS_DIR, exist_ok=True)
 
 # Bloqueo global para evitar la ejecución concurrente de múltiples archivos por lotes
 batch_lock = asyncio.Lock()
+
+def df_to_b64_excel(df_or_dict):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        if isinstance(df_or_dict, dict):
+            for sheet_name, df_sheet in df_or_dict.items():
+                df_sheet.to_excel(writer, sheet_name=sheet_name, index=False)
+        else:
+            df_or_dict.to_excel(writer, index=False)
+    return base64.b64encode(output.getvalue()).decode('utf-8')
+
 
 # Estado global del trabajo activo para calcular estimaciones a los trabajos en cola
 active_job_state = {
@@ -224,10 +236,39 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     
             response_data = {"comments": results}
             
+            # Construir DataFrames para exportación
+            df_step1 = pd.DataFrame(results)
+            df_step2 = df_step1[df_step1["is_noise"] == False].copy() if not df_step1.empty else pd.DataFrame()
+            
+            sdi_results = {}
             if issue_col:
                 # Group by issue using the batch SDI calculator
                 sdi_results = calculate_batch_sdi(issues_data)
                 response_data["issues_metrics"] = sdi_results
+                
+            df_step3 = pd.DataFrame(sdi_results).T.reset_index().rename(columns={"index": "issue_number"}) if sdi_results else pd.DataFrame()
+            
+            # Construir Excel Final
+            df_ontology = pd.DataFrame()
+            try:
+                with open("data/frontend_ontology_dictionary.json", "r", encoding="utf-8") as f:
+                    ont_data = json.load(f)
+                    flat_ont = []
+                    for k, v in ont_data.items():
+                        if isinstance(v, dict):
+                            v["id"] = k
+                            flat_ont.append(v)
+                    df_ontology = pd.DataFrame(flat_ont)
+            except Exception:
+                pass
+                
+            exports = {
+                "step1_b64": df_to_b64_excel(df_step1),
+                "step2_b64": df_to_b64_excel(df_step2),
+                "step3_b64": df_to_b64_excel(df_step3),
+                "final_excel_b64": df_to_b64_excel({"Comentarios": df_step1, "Ontologia": df_ontology})
+            }
+            response_data["exports"] = exports
                 
             update_job_status(job_id, {
                 "status": "completed",

@@ -113,12 +113,43 @@ Retorna el JSON completo con todos los comentarios analizados y las **Métricas 
         "social_debt_level": "High Social Debt",
         "comment_count": 32,
         "macro_diversity": 5,
-        "micro_diversity": 3
+        "micro_diversity": 3,
+        "dominant_macrocauses": [["C", 10], ["A", 5]],
+        "dominant_microcause_types": [["CongruenceCause", 10], ["AdministrativeCause", 5]]
       }
+    },
+    "exports": {
+      "step1_b64": "UEsDBBQAAAAIA...",
+      "step2_b64": "UEsDBBQAAAAIA...",
+      "step3_b64": "UEsDBBQAAAAIA...",
+      "final_excel_b64": "UEsDBBQAAAAIA..."
     }
   }
 }
 ```
+
+> [!TIP]
+> **Trazabilidad Autonóma (Frontend)**
+> El nodo `exports` contiene los archivos **Excel (.xlsx)** codificados en Base64 de cada paso lógico del modelo (ideal para que un juez audite el proceso). Para descargarlos directamente desde el navegador sin hacer peticiones adicionales al servidor, puedes usar este fragmento de JavaScript:
+> ```javascript
+> function downloadBase64Excel(base64String, fileName) {
+>   const byteCharacters = atob(base64String);
+>   const byteNumbers = new Array(byteCharacters.length);
+>   for (let i = 0; i < byteCharacters.length; i++) {
+>     byteNumbers[i] = byteCharacters.charCodeAt(i);
+>   }
+>   const byteArray = new Uint8Array(byteNumbers);
+>   const blob = new Blob([byteArray], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+>   
+>   const link = document.createElement('a');
+>   link.href = window.URL.createObjectURL(blob);
+>   link.download = fileName;
+>   link.click();
+> }
+> 
+> // Ejemplo de uso:
+> // downloadBase64Excel(response.result.exports.final_excel_b64, "Reporte_Final.xlsx");
+> ```
 
 #### 5. Cancelar un Trabajo (Batch Cancel)
 `POST /classify/batch/cancel`

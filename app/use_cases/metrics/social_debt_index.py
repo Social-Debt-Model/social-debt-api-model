@@ -22,6 +22,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             # Extract microcauses
             micro_names = [m.get("cause_name") for m in c.get("microcauses", [])]
             micro_scores = [m.get("similarity", 0.0) for m in c.get("microcauses", [])]
+            micro_types = [m.get("cause_type") for m in c.get("microcauses", [])]
 
             # Extract smells and risks
             smells = []
@@ -35,6 +36,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
                 "final_cause_for_analysis": c.get("code", "H"),
                 "top_microcause_names_list": micro_names,
                 "top_microcause_scores_list": micro_scores,
+                "top_microcause_types_list": micro_types,
                 "community_smells_list": smells,
                 "risks_list": risks,
                 "comment_body_clean_final": c.get("cleaned_text", "")
@@ -47,16 +49,23 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
 
     def aggregate_issue(group):
         micro_counter = Counter()
+        type_counter = Counter()
         smell_counter = Counter()
         risk_counter = Counter()
         macro_counter = Counter()
 
         for _, row in group.iterrows():
-            macro_counter[row["final_cause_for_analysis"]] += 1
+            cause = row["final_cause_for_analysis"]
+            if cause != "H":
+                macro_counter[cause] += 1
             micro_names = row["top_microcause_names_list"]
             micro_scores = row["top_microcause_scores_list"]
+            micro_types = row["top_microcause_types_list"]
             for name, score in zip(micro_names, micro_scores):
                 micro_counter[name] += float(score)
+            for m_type in micro_types:
+                if m_type:
+                    type_counter[m_type] += 1
             for smell in row["community_smells_list"]:
                 smell_counter[smell] += 1
             for risk in row["risks_list"]:
@@ -66,6 +75,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             "comment_count": len(group),
             "dominant_macrocauses": macro_counter.most_common(5),
             "dominant_microcauses": micro_counter.most_common(5),
+            "dominant_microcause_types": type_counter.most_common(5),
             "dominant_community_smells": smell_counter.most_common(5),
             "dominant_risks": risk_counter.most_common(5),
             "issue_text": "\n\n".join(group["comment_body_clean_final"].astype(str))
@@ -143,6 +153,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             "top_risk_frequency": int(row["top_risk_frequency"]),
             "dominant_macrocauses": row["dominant_macrocauses"],
             "dominant_microcauses": row["dominant_microcauses"],
+            "dominant_microcause_types": row["dominant_microcause_types"],
             "dominant_community_smells": row["dominant_community_smells"],
             "dominant_risks": row["dominant_risks"]
         }
