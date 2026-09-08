@@ -119,10 +119,10 @@ Retorna el JSON completo con todos los comentarios analizados y las **Métricas 
       }
     },
     "exports": {
-      "step1_b64": "UEsDBBQAAAAIA...",
-      "step2_b64": "UEsDBBQAAAAIA...",
-      "step3_b64": "UEsDBBQAAAAIA...",
-      "final_excel_b64": "UEsDBBQAAAAIA..."
+      "step1_b64": "UEsDBBQAAAAIA... (Paso 1: Limpieza de Ruido Operativo)",
+      "step2_b64": "UEsDBBQAAAAIA... (Paso 2: Razonamiento Complejo - Macrocausas)",
+      "step3_b64": "UEsDBBQAAAAIA... (Paso 3: Emparejamiento NLP - Microcausas)",
+      "final_excel_b64": "UEsDBBQAAAAIA... (Reporte Maestro con SDI y Ontología)"
     }
   }
 }
@@ -130,7 +130,11 @@ Retorna el JSON completo con todos los comentarios analizados y las **Métricas 
 
 > [!TIP]
 > **Trazabilidad Autonóma (Frontend)**
-> El nodo `exports` contiene los archivos **Excel (.xlsx)** codificados en Base64 de cada paso lógico del modelo (ideal para que un juez audite el proceso). Para descargarlos directamente desde el navegador sin hacer peticiones adicionales al servidor, puedes usar este fragmento de JavaScript:
+> El nodo `exports` contiene los archivos **Excel (.xlsx)** codificados en Base64 de cada paso lógico del modelo (ideal para que un juez audite el proceso). La información es progresiva (Espejo de los cuadernos de investigación):
+> - **step1_b64:** Todos los comentarios iniciales marcando ruido (`is_noise`).
+> - **step2_b64:** Solo comentarios limpios enriquecidos con su Macrocausa (LLM).
+> - **step3_b64:** Comentarios limpios + Macrocausa + Microcausas aplanadas legibles.
+> - **final_excel_b64:** Libro multipestaña con los Comentarios (Paso 3), las Métricas SDI por Issue y el Diccionario de Ontología.
 > ```javascript
 > function downloadBase64Excel(base64String, fileName) {
 >   const byteCharacters = atob(base64String);

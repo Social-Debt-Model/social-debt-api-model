@@ -236,17 +236,49 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     
             response_data = {"comments": results}
             
-            # Construir DataFrames para exportación
-            df_step1 = pd.DataFrame(results)
-            df_step2 = df_step1[df_step1["is_noise"] == False].copy() if not df_step1.empty else pd.DataFrame()
+            # Construir DataFrames para exportación progresiva
+            df_full = pd.DataFrame(results)
             
+            cols_step1 = ["issue_number", "comment_id", "cleaned_text", "is_noise", "noise_level"]
+            df_step1 = df_full[[c for c in cols_step1 if c in df_full.columns]].copy() if not df_full.empty else pd.DataFrame()
+            
+            cols_step2 = cols_step1 + ["macro_cause_code", "macro_cause_clean", "rule_applied", "confidence"]
+            df_step2 = df_full[df_full["is_noise"] == False][[c for c in cols_step2 if c in df_full.columns]].copy() if not df_full.empty else pd.DataFrame()
+            
+            def flatten_microcauses(row):
+                micros = row.get("microcauses", [])
+                if not isinstance(micros, list) or not micros:
+                    return pd.Series({"micro_names": "", "micro_types": "", "micro_risks": "", "micro_smells": ""})
+                
+                names = [m.get("cause_name", "") for m in micros if m.get("cause_name")]
+                types = [m.get("cause_type", "") for m in micros if m.get("cause_type")]
+                risks = set()
+                smells = set()
+                for m in micros:
+                    for r in m.get("risks", []): risks.add(r)
+                    for s in m.get("community_smells", []): smells.add(s)
+                
+                return pd.Series({
+                    "micro_names": ", ".join(names),
+                    "micro_types": ", ".join(set(types)),
+                    "micro_risks": ", ".join(risks),
+                    "micro_smells": ", ".join(smells)
+                })
+
+            df_step3 = pd.DataFrame()
+            if not df_full.empty:
+                df_clean = df_full[df_full["is_noise"] == False].copy()
+                if not df_clean.empty:
+                    flattened = df_clean.apply(flatten_microcauses, axis=1)
+                    cols_to_keep = [c for c in cols_step2 if c in df_clean.columns]
+                    df_step3 = pd.concat([df_clean[cols_to_keep], flattened], axis=1)
+
             sdi_results = {}
             if issue_col:
-                # Group by issue using the batch SDI calculator
                 sdi_results = calculate_batch_sdi(issues_data)
                 response_data["issues_metrics"] = sdi_results
                 
-            df_step3 = pd.DataFrame(sdi_results).T.reset_index().rename(columns={"index": "issue_number"}) if sdi_results else pd.DataFrame()
+            df_sdi = pd.DataFrame(sdi_results).T.reset_index().rename(columns={"index": "issue_number"}) if sdi_results else pd.DataFrame()
             
             # Construir Excel Final
             df_ontology = pd.DataFrame()
@@ -266,7 +298,11 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                 "step1_b64": df_to_b64_excel(df_step1),
                 "step2_b64": df_to_b64_excel(df_step2),
                 "step3_b64": df_to_b64_excel(df_step3),
-                "final_excel_b64": df_to_b64_excel({"Comentarios": df_step1, "Ontologia": df_ontology})
+                "final_excel_b64": df_to_b64_excel({
+                    "Comentarios": df_step3,
+                    "Metricas SDI": df_sdi,
+                    "Ontologia": df_ontology
+                })
             }
             response_data["exports"] = exports
                 
