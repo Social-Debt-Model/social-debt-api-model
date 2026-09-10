@@ -16,6 +16,7 @@ from app.domain.schemas import ClassificationRequest, ClassificationResponse
 from pydantic import BaseModel
 from app.use_cases.preprocessing.cleaning import clean_comment_text
 from app.use_cases.preprocessing.noise_filtering import es_hard_noise, es_operational_noise
+from app.use_cases.classification.priority_rules import apply_priority_rules
 from app.use_cases.classification.llm_classifier import predict_macro_cause
 from app.use_cases.semantic.ontology_matcher import classify_specific_causes_topk
 from app.infrastructure.ontology_client import enrich_microcause
@@ -73,8 +74,8 @@ def get_job_status(job_id: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-async def process_single_comment(text: str) -> dict:
-    cleaned_text = clean_comment_text(text)
+async def process_single_comment(text: str, author: str = "") -> dict:
+    cleaned_text = clean_comment_text(text, author)
     is_hard = es_hard_noise(cleaned_text)
     is_oper = es_operational_noise(cleaned_text)
     is_noise = is_hard or is_oper
@@ -88,8 +89,7 @@ async def process_single_comment(text: str) -> dict:
     
     if not is_noise:
         llm_code, llm_conf = await predict_macro_cause(cleaned_text)
-        final_code = llm_code
-        final_conf = llm_conf
+        final_code, final_conf, rule_applied = apply_priority_rules(cleaned_text, llm_code, llm_conf)
         
         if final_code != "H":
             # Map code back to label for the semantic matcher (it expects labels, wait, I can modify it or pass code)
@@ -132,7 +132,7 @@ async def process_single_comment(text: str) -> dict:
         "microcauses": microcauses
     }
 
-async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str, issue_col: str):
+async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str, issue_col: str, author_col: str = None):
     global active_job_state
     
     # Usar el bloqueo global para asegurar que solo 1 archivo se procese a la vez
@@ -176,16 +176,17 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                 
                 for idx, row in chunk:
                     text = str(row[text_col])
+                    author = str(row[author_col]) if author_col and not pd.isna(row.get(author_col)) else ""
                     if pd.isna(row[text_col]) or not text.strip():
                         # Para simplificar el gather, enviamos una tarea dummy que retorna un dict vacío o manejamos después
                         async def dummy_task(r):
                             return r, None
                         tasks.append(dummy_task(row))
                     else:
-                        async def process_task(r, t):
-                            res = await process_single_comment(t)
+                        async def process_task(r, t, a):
+                            res = await process_single_comment(t, a)
                             return r, res
-                        tasks.append(process_task(row, text))
+                        tasks.append(process_task(row, text, author))
                 
                 chunk_results = await asyncio.gather(*tasks)
                 
@@ -202,8 +203,12 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
 
                     row_dict = {
                         "issue_number": iss_val,
-                        "comment_id": id_val
+                        "comment_id": id_val,
+                        "raw_text": str(row[text_col]) if pd.notna(row.get(text_col)) else ""
                     }
+                    if author_col:
+                        row_dict["author"] = str(row.get(author_col, "")) if pd.notna(row.get(author_col)) else ""
+
                     row_dict.update(res)
                     results.append(row_dict)
                     
@@ -239,70 +244,118 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
             # Construir DataFrames para exportación progresiva
             df_full = pd.DataFrame(results)
             
-            cols_step1 = ["issue_number", "comment_id", "cleaned_text", "is_noise", "noise_level"]
+            cols_step1 = ["issue_number", "comment_id", "author", "raw_text", "cleaned_text"]
             df_step1 = df_full[[c for c in cols_step1 if c in df_full.columns]].copy() if not df_full.empty else pd.DataFrame()
             
-            cols_step2 = cols_step1 + ["macro_cause_code", "macro_cause_clean", "rule_applied", "confidence"]
-            df_step2 = df_full[df_full["is_noise"] == False][[c for c in cols_step2 if c in df_full.columns]].copy() if not df_full.empty else pd.DataFrame()
+            cols_step2 = cols_step1 + ["is_noise", "noise_level"]
+            df_step2 = df_full[[c for c in cols_step2 if c in df_full.columns]].copy() if not df_full.empty else pd.DataFrame()
+            
+            cols_step3 = cols_step2 + ["macro_cause_code", "macro_cause_clean", "rule_applied", "confidence"]
+            df_step3 = df_full[df_full["is_noise"] == False][[c for c in cols_step3 if c in df_full.columns]].copy() if not df_full.empty else pd.DataFrame()
             
             def flatten_microcauses(row):
                 micros = row.get("microcauses", [])
-                if not isinstance(micros, list) or not micros:
-                    return pd.Series({"micro_names": "", "micro_types": "", "micro_risks": "", "micro_smells": ""})
+                if not isinstance(micros, list):
+                    micros = []
                 
-                names = [m.get("cause_name", "") for m in micros if m.get("cause_name")]
-                types = [m.get("cause_type", "") for m in micros if m.get("cause_type")]
-                risks = set()
-                smells = set()
-                for m in micros:
-                    for r in m.get("risks", []): risks.add(r)
-                    for s in m.get("community_smells", []): smells.add(s)
+                result = {}
+                for i in range(1, 4):
+                    if i <= len(micros):
+                        m = micros[i-1]
+                        result[f"microcause_{i}_name"] = m.get("cause_name", "")
+                        result[f"microcause_{i}_similarity"] = m.get("similarity", 0.0)
+                        
+                        ctype = m.get("cause_type", "")
+                        if isinstance(ctype, list): ctype = " | ".join(ctype)
+                        
+                        result[f"microcause_{i}_types"] = ctype
+                        result[f"microcause_{i}_risks"] = " | ".join(m.get("risks", []))
+                        result[f"microcause_{i}_smells"] = " | ".join(m.get("community_smells", []))
+                        result[f"microcause_{i}_preventive_strategies"] = " | ".join(m.get("preventive_strategies", []))
+                        result[f"microcause_{i}_corrective_strategies"] = " | ".join(m.get("corrective_strategies", []))
+                        result[f"microcause_{i}_effects"] = " | ".join(m.get("effects", []))
+                        result[f"microcause_{i}_indicators"] = " | ".join(m.get("indicators", []))
+                        result[f"microcause_{i}_metrics"] = " | ".join(m.get("metrics", []))
+                    else:
+                        result[f"microcause_{i}_name"] = ""
+                        result[f"microcause_{i}_similarity"] = ""
+                        result[f"microcause_{i}_types"] = ""
+                        result[f"microcause_{i}_risks"] = ""
+                        result[f"microcause_{i}_smells"] = ""
+                        result[f"microcause_{i}_preventive_strategies"] = ""
+                        result[f"microcause_{i}_corrective_strategies"] = ""
+                        result[f"microcause_{i}_effects"] = ""
+                        result[f"microcause_{i}_indicators"] = ""
+                        result[f"microcause_{i}_metrics"] = ""
                 
-                return pd.Series({
-                    "micro_names": ", ".join(names),
-                    "micro_types": ", ".join(set(types)),
-                    "micro_risks": ", ".join(risks),
-                    "micro_smells": ", ".join(smells)
-                })
+                return pd.Series(result)
 
-            df_step3 = pd.DataFrame()
+            df_step4 = pd.DataFrame()
             if not df_full.empty:
-                df_clean = df_full[df_full["is_noise"] == False].copy()
+                df_clean = df_full[(df_full["is_noise"] == False) & (df_full["macro_cause_code"] != "H")].copy()
                 if not df_clean.empty:
                     flattened = df_clean.apply(flatten_microcauses, axis=1)
-                    cols_to_keep = [c for c in cols_step2 if c in df_clean.columns]
-                    df_step3 = pd.concat([df_clean[cols_to_keep], flattened], axis=1)
+                    cols_to_keep = [c for c in cols_step3 if c in df_clean.columns]
+                    df_step4 = pd.concat([df_clean[cols_to_keep], flattened], axis=1)
 
             sdi_results = {}
             if issue_col:
                 sdi_results = calculate_batch_sdi(issues_data)
                 response_data["issues_metrics"] = sdi_results
                 
-            df_sdi = pd.DataFrame(sdi_results).T.reset_index().rename(columns={"index": "issue_number"}) if sdi_results else pd.DataFrame()
+            if sdi_results:
+                df_sdi = pd.DataFrame(sdi_results).T.reset_index().rename(columns={"index": "issue_number"})
+                
+                def format_tuple_list(lst):
+                    if isinstance(lst, list):
+                        return " | ".join(f"{item} ({score})" if isinstance(score, int) else f"{item} ({score:.2f})" for item, score in lst)
+                    return lst
+                
+                for col in ["dominant_macrocauses", "dominant_microcauses", "dominant_microcause_types", "dominant_community_smells", "dominant_risks"]:
+                    if col in df_sdi.columns:
+                        df_sdi[col] = df_sdi[col].apply(format_tuple_list)
+            else:
+                df_sdi = pd.DataFrame()
             
             # Construir Excel Final
-            df_ontology = pd.DataFrame()
+            ont_dataframes = {}
             try:
                 with open("data/frontend_ontology_dictionary.json", "r", encoding="utf-8") as f:
                     ont_data = json.load(f)
-                    flat_ont = []
-                    for k, v in ont_data.items():
-                        if isinstance(v, dict):
-                            v["id"] = k
-                            flat_ont.append(v)
-                    df_ontology = pd.DataFrame(flat_ont)
+                    for category, items in ont_data.items():
+                        flat_ont = []
+                        if isinstance(items, dict):
+                            for item_id, item_val in items.items():
+                                if isinstance(item_val, dict):
+                                    flat_ont.append({
+                                        "id": item_id,
+                                        "name": str(item_val.get("name", "")).strip(),
+                                        "description": str(item_val.get("description", "")).strip()
+                                    })
+                                else:
+                                    flat_ont.append({
+                                        "id": item_id,
+                                        "name": str(item_val).strip(),
+                                        "description": ""
+                                    })
+                            if flat_ont:
+                                sheet_name = f"Ontologia - {category}"[:31] # Excel limits sheet name to 31 chars
+                                ont_dataframes[sheet_name] = pd.DataFrame(flat_ont)
             except Exception:
                 pass
                 
+            final_sheets = {
+                "Comentarios": df_step4,
+                "Metricas SDI": df_sdi
+            }
+            final_sheets.update(ont_dataframes)
+            
             exports = {
-                "step1_b64": df_to_b64_excel(df_step1),
-                "step2_b64": df_to_b64_excel(df_step2),
-                "step3_b64": df_to_b64_excel(df_step3),
-                "final_excel_b64": df_to_b64_excel({
-                    "Comentarios": df_step3,
-                    "Metricas SDI": df_sdi,
-                    "Ontologia": df_ontology
-                })
+                "step1_b64": df_to_b64_excel({"Paso 1": df_step1}),
+                "step2_b64": df_to_b64_excel({"Paso 2": df_step2}),
+                "step3_b64": df_to_b64_excel({"Paso 3": df_step3}),
+                "step4_b64": df_to_b64_excel({"Paso 4": df_step4}),
+                "final_excel_b64": df_to_b64_excel(final_sheets)
             }
             response_data["exports"] = exports
                 
@@ -383,6 +436,10 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
     issue_keywords = ['issue_number', 'issue', 'ticket', 'issue_id']
     issue_col = next((col for col in df.columns if any(kw in col.lower() for kw in issue_keywords)), None)
     
+    # Buscar la columna del autor (coincidencia parcial)
+    author_keywords = ['author', 'user', 'login', 'creator']
+    author_col = next((col for col in df.columns if any(kw in col.lower() for kw in author_keywords)), None)
+    
     # Generar un ID corto, humano y amigable (ej: "A8K9M2")
     job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
     
@@ -393,7 +450,7 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
         "filename": file.filename
     })
     
-    background_tasks.add_task(background_batch_process, job_id, df, text_col, issue_col)
+    background_tasks.add_task(background_batch_process, job_id, df, text_col, issue_col, author_col)
     
     return {
         "job_id": job_id,

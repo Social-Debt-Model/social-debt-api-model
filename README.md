@@ -119,9 +119,10 @@ Retorna el JSON completo con todos los comentarios analizados y las **Métricas 
       }
     },
     "exports": {
-      "step1_b64": "UEsDBBQAAAAIA... (Paso 1: Limpieza de Ruido Operativo)",
-      "step2_b64": "UEsDBBQAAAAIA... (Paso 2: Razonamiento Complejo - Macrocausas)",
-      "step3_b64": "UEsDBBQAAAAIA... (Paso 3: Emparejamiento NLP - Microcausas)",
+      "step1_b64": "UEsDBBQAAAAIA... (Paso 1: Limpieza de Texto Crudo)",
+      "step2_b64": "UEsDBBQAAAAIA... (Paso 2: Filtro de Ruido Operativo)",
+      "step3_b64": "UEsDBBQAAAAIA... (Paso 3: Razonamiento Complejo - Macrocausas)",
+      "step4_b64": "UEsDBBQAAAAIA... (Paso 4: Emparejamiento NLP - Microcausas)",
       "final_excel_b64": "UEsDBBQAAAAIA... (Reporte Maestro con SDI y Ontología)"
     }
   }
@@ -130,11 +131,12 @@ Retorna el JSON completo con todos los comentarios analizados y las **Métricas 
 
 > [!TIP]
 > **Trazabilidad Autonóma (Frontend)**
-> El nodo `exports` contiene los archivos **Excel (.xlsx)** codificados en Base64 de cada paso lógico del modelo (ideal para que un juez audite el proceso). La información es progresiva (Espejo de los cuadernos de investigación):
-> - **step1_b64:** Todos los comentarios iniciales marcando ruido (`is_noise`).
-> - **step2_b64:** Solo comentarios limpios enriquecidos con su Macrocausa (LLM).
-> - **step3_b64:** Comentarios limpios + Macrocausa + Microcausas aplanadas legibles.
-> - **final_excel_b64:** Libro multipestaña con los Comentarios (Paso 3), las Métricas SDI por Issue y el Diccionario de Ontología.
+> El nodo `exports` contiene los archivos **Excel (.xlsx)** codificados en Base64 de cada paso lógico del modelo (ideal para que un juez audite el proceso). La información es progresiva (Espejo exacto de los 5 cuadernos de investigación):
+> - **step1_b64:** Texto crudo (`raw_text`), texto limpio (`cleaned_text`), y el autor (`author`).
+> - **step2_b64:** Comentarios iniciales marcando ruido (`is_noise`) utilizando la columna `author` (si existe) y reglas de texto.
+> - **step3_b64:** Solo comentarios limpios enriquecidos con su Macrocausa (LLM) y la regla de prioridad aplicada (`rule_applied`).
+> - **step4_b64:** Comentarios limpios + Macrocausa + Microcausas aplanadas legibles.
+> - **final_excel_b64:** Libro multipestaña con los Comentarios (Paso 4), las Métricas SDI por Issue y el Diccionario de Ontología.
 > ```javascript
 > function downloadBase64Excel(base64String, fileName) {
 >   const byteCharacters = atob(base64String);

@@ -29,7 +29,7 @@ async def run_test():
         
         print("\n6. Micro-causas (Match Semántico) y Detalles Ontológicos:")
         for mc in result['microcauses']:
-            print(f"   - {mc['cause_id']}: {mc['cause_name']} (Similitud: {mc['similarity']:.2f})")
+            print(f"   - {mc['ontology_id']}: {mc['cause_name']} (Similitud: {mc['similarity']:.2f})")
             if mc.get('corrective_strategies'):
                 print(f"     > Soluciones Correctivas: {', '.join(mc['corrective_strategies'])}")
             if mc.get('preventive_strategies'):

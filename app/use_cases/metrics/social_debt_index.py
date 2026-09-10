@@ -73,6 +73,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
 
         return pd.Series({
             "comment_count": len(group),
+            "clean_comment_count": sum(1 for _, r in group.iterrows() if r["final_cause_for_analysis"] != "H"),
             "dominant_macrocauses": macro_counter.most_common(5),
             "dominant_microcauses": micro_counter.most_common(5),
             "dominant_microcause_types": type_counter.most_common(5),
@@ -143,6 +144,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             "social_debt_index": float(row["social_debt_index"]) if not pd.isna(row["social_debt_index"]) else 0.0,
             "social_debt_level": row.get("social_debt_level", "Unknown"),
             "comment_count": int(row["comment_count"]),
+            "clean_comment_count": int(row["clean_comment_count"]),
             "macro_diversity": int(row["macro_diversity"]),
             "micro_diversity": int(row["micro_diversity"]),
             "smell_diversity": int(row["smell_diversity"]),
