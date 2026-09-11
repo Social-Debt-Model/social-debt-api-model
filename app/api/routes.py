@@ -31,15 +31,8 @@ os.makedirs(JOBS_DIR, exist_ok=True)
 # Bloqueo global para evitar la ejecución concurrente de múltiples archivos por lotes
 batch_lock = asyncio.Lock()
 
-def df_to_b64_excel(df_or_dict):
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        if isinstance(df_or_dict, dict):
-            for sheet_name, df_sheet in df_or_dict.items():
-                df_sheet.to_excel(writer, sheet_name=sheet_name, index=False)
-        else:
-            df_or_dict.to_excel(writer, index=False)
-    return base64.b64encode(output.getvalue()).decode('utf-8')
+# La generación de Excels ha sido delegada al Frontend (Client-Side)
+# para reducir carga del servidor y ancho de banda.
 
 
 # Estado global del trabajo activo para calcular estimaciones a los trabajos en cola
@@ -241,123 +234,10 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     
             response_data = {"comments": results}
             
-            # Construir DataFrames para exportación progresiva
-            df_full = pd.DataFrame(results)
-            
-            cols_step1 = ["issue_number", "comment_id", "author", "raw_text", "cleaned_text"]
-            df_step1 = df_full[[c for c in cols_step1 if c in df_full.columns]].copy() if not df_full.empty else pd.DataFrame()
-            
-            cols_step2 = cols_step1 + ["is_noise", "noise_level"]
-            df_step2 = df_full[[c for c in cols_step2 if c in df_full.columns]].copy() if not df_full.empty else pd.DataFrame()
-            
-            cols_step3 = cols_step2 + ["macro_cause_code", "macro_cause_clean", "rule_applied", "confidence"]
-            df_step3 = df_full[df_full["is_noise"] == False][[c for c in cols_step3 if c in df_full.columns]].copy() if not df_full.empty else pd.DataFrame()
-            
-            def flatten_microcauses(row):
-                micros = row.get("microcauses", [])
-                if not isinstance(micros, list):
-                    micros = []
-                
-                result = {}
-                for i in range(1, 4):
-                    if i <= len(micros):
-                        m = micros[i-1]
-                        result[f"microcause_{i}_name"] = m.get("cause_name", "")
-                        result[f"microcause_{i}_similarity"] = m.get("similarity", 0.0)
-                        
-                        ctype = m.get("cause_type", "")
-                        if isinstance(ctype, list): ctype = " | ".join(ctype)
-                        
-                        result[f"microcause_{i}_types"] = ctype
-                        result[f"microcause_{i}_risks"] = " | ".join(m.get("risks", []))
-                        result[f"microcause_{i}_smells"] = " | ".join(m.get("community_smells", []))
-                        result[f"microcause_{i}_preventive_strategies"] = " | ".join(m.get("preventive_strategies", []))
-                        result[f"microcause_{i}_corrective_strategies"] = " | ".join(m.get("corrective_strategies", []))
-                        result[f"microcause_{i}_effects"] = " | ".join(m.get("effects", []))
-                        result[f"microcause_{i}_indicators"] = " | ".join(m.get("indicators", []))
-                        result[f"microcause_{i}_metrics"] = " | ".join(m.get("metrics", []))
-                    else:
-                        result[f"microcause_{i}_name"] = ""
-                        result[f"microcause_{i}_similarity"] = ""
-                        result[f"microcause_{i}_types"] = ""
-                        result[f"microcause_{i}_risks"] = ""
-                        result[f"microcause_{i}_smells"] = ""
-                        result[f"microcause_{i}_preventive_strategies"] = ""
-                        result[f"microcause_{i}_corrective_strategies"] = ""
-                        result[f"microcause_{i}_effects"] = ""
-                        result[f"microcause_{i}_indicators"] = ""
-                        result[f"microcause_{i}_metrics"] = ""
-                
-                return pd.Series(result)
-
-            df_step4 = pd.DataFrame()
-            if not df_full.empty:
-                df_clean = df_full[(df_full["is_noise"] == False) & (df_full["macro_cause_code"] != "H")].copy()
-                if not df_clean.empty:
-                    flattened = df_clean.apply(flatten_microcauses, axis=1)
-                    cols_to_keep = [c for c in cols_step3 if c in df_clean.columns]
-                    df_step4 = pd.concat([df_clean[cols_to_keep], flattened], axis=1)
-
             sdi_results = {}
             if issue_col:
                 sdi_results = calculate_batch_sdi(issues_data)
                 response_data["issues_metrics"] = sdi_results
-                
-            if sdi_results:
-                df_sdi = pd.DataFrame(sdi_results).T.reset_index().rename(columns={"index": "issue_number"})
-                
-                def format_tuple_list(lst):
-                    if isinstance(lst, list):
-                        return " | ".join(f"{item} ({score})" if isinstance(score, int) else f"{item} ({score:.2f})" for item, score in lst)
-                    return lst
-                
-                for col in ["dominant_macrocauses", "dominant_microcauses", "dominant_microcause_types", "dominant_community_smells", "dominant_risks"]:
-                    if col in df_sdi.columns:
-                        df_sdi[col] = df_sdi[col].apply(format_tuple_list)
-            else:
-                df_sdi = pd.DataFrame()
-            
-            # Construir Excel Final
-            ont_dataframes = {}
-            try:
-                with open("data/frontend_ontology_dictionary.json", "r", encoding="utf-8") as f:
-                    ont_data = json.load(f)
-                    for category, items in ont_data.items():
-                        flat_ont = []
-                        if isinstance(items, dict):
-                            for item_id, item_val in items.items():
-                                if isinstance(item_val, dict):
-                                    flat_ont.append({
-                                        "id": item_id,
-                                        "name": str(item_val.get("name", "")).strip(),
-                                        "description": str(item_val.get("description", "")).strip()
-                                    })
-                                else:
-                                    flat_ont.append({
-                                        "id": item_id,
-                                        "name": str(item_val).strip(),
-                                        "description": ""
-                                    })
-                            if flat_ont:
-                                sheet_name = f"Ontologia - {category}"[:31] # Excel limits sheet name to 31 chars
-                                ont_dataframes[sheet_name] = pd.DataFrame(flat_ont)
-            except Exception:
-                pass
-                
-            final_sheets = {
-                "Comentarios": df_step4,
-                "Metricas SDI": df_sdi
-            }
-            final_sheets.update(ont_dataframes)
-            
-            exports = {
-                "step1_b64": df_to_b64_excel({"Paso 1": df_step1}),
-                "step2_b64": df_to_b64_excel({"Paso 2": df_step2}),
-                "step3_b64": df_to_b64_excel({"Paso 3": df_step3}),
-                "step4_b64": df_to_b64_excel({"Paso 4": df_step4}),
-                "final_excel_b64": df_to_b64_excel(final_sheets)
-            }
-            response_data["exports"] = exports
                 
             update_job_status(job_id, {
                 "status": "completed",
