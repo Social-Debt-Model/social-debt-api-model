@@ -76,7 +76,7 @@ async def process_single_comment(text: str, author: str = "") -> dict:
     is_hard = es_hard_noise(cleaned_text)
     is_oper = es_operational_noise(cleaned_text)
     is_noise = is_hard or is_oper
-    noise_level = "hard_noise" if is_hard else "operational_noise" if is_oper else "none"
+    noise_level = "hard_noise" if is_hard else "operational_noise" if is_oper else "useful"
     
     final_code = "H"
     macro_label = "No identificable"
