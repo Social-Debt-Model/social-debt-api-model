@@ -1,9 +1,58 @@
-import numpy as np
+import re
 import pandas as pd
 from sentence_transformers import SentenceTransformer, util
-from app.infrastructure.ontology_client import ontology_causes, enrich_microcause
+from app.infrastructure.ontology_client import ontology_causes
 
 model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+
+DEFAULT_THRESHOLD = 0.28
+DEFAULT_TOP_K = 3
+DEFAULT_ALPHA = 0.10
+DEFAULT_LEXICAL_WEIGHT = 0.20
+MAX_SCORE_GAP = 0.18
+
+GENERIC_CAUSE_PENALTY = {
+    "CL-001_LowSocialization": 0.020,
+    "COL-004_LackOfCollaborationOrTeamwork": 0.020,
+    "COG-007_TechnicalComplexityDueToDependencies": 0.015,
+    "CO-003_UnclearOrAmbiguousCommunication": 0.015,
+    "CA-005_BlockageDueToApprovalRequirements": 0.015,
+}
+
+LEXICAL_SIGNALS = {
+    "CO-001_LanguageBarriers":["language","translation","terminology","wording","vocabulary","non native","mother tongue","dialect","term"],
+    "CO-002_DelayedCommunication":["late","delay","delayed","waiting","no update","slow response","sorry for the delay"],
+    "CO-003_UnclearOrAmbiguousCommunication":["unclear","ambiguous","confusing","not clear","clarify","clarification","what do you mean","don't understand"],
+    "CO-005_MisinterpretationOfInformation":["misunderstood","misinterpret","wrong understanding","incorrect assumption"],
+    "COG-007_TechnicalComplexityDueToDependencies":["dependency","dependencies","depends on","component","module","integration","external system"],
+    "COG-008_CompatibilityConstraints":["compatibility","backward compatibility","backwards compatible","version mismatch","legacy","api version","browser","database"],
+    "COG-011_SystemConfigurationConstraints":["configuration","config","environment","settings","deployment","runtime","variable"],
+    "CA-011_RequestForTechnicalValidationSupport":["validate","validation","review","expert review","maintainer","confirm"],
+    "CA-012_RepositoryAccessLimitation":["repository access","access denied","permission","cannot push","cannot trigger","fork"],
+    "CA-013_InefficientOrInadequateTools":["ci","tool","tooling","dashboard","logs","buildbot","automation","flaky","test failed","job failed"],
+    "CA-005_BlockageDueToApprovalRequirements":["approval","approve","approved","waiting approval","cannot merge","required review"],
+    "CA-007_InefficientOrganizationalProcesses":["process","workflow","bureaucracy","release process","slow process"],
+    "CA-009_ConstraintDueToTicketStatusForReview":["needs review","ticket","review status","needs tests","needs improvement"],
+    "COO-002_RestrictedInformationFlow":["restricted information","hidden information","information access","not visible"],
+    "COO-006_MiscommunicationInTaskHandover":["handover","handoff","transfer","passed to","take over"],
+    "COO-008_CoordinationMisalignmentForTechnicalValidation":["technical validation","validation responsibility","validation timing","approval criteria"],
+    "COO-009_TaskReworkDueToMisalignment":["rework","redo","repeat","revert","reimplemented","change requests","rebase"],
+    "CR-001_LackOfTaskDiscussion":["needs discussion","task discussion","requirements discussion"],
+    "CL-001_LowSocialization":["little interaction","rarely interact","low engagement","few discussions"],
+    "COL-003_InsufficientPeerSupport":["need help","help me","assistance","guidance","mentor"],
+    "COL-004_LackOfCollaborationOrTeamwork":["collaboration","work together","shared decision","joint work","working alone"],
+    "COL-005_LackOfKnowledgeSharing":["knowledge sharing","share knowledge","knowledge transfer","lessons learned"],
+    "COL-006_LackOfTrustAmongTeamMembers":["trust","distrust","hostile","skeptical","good faith"],
+    "CO-006_PerceivedUnfairnessInInteraction":["unfair","not fair","bias","biased","double standard","favoritism"],
+    "COG-004_LackOfPeerAcknowledgement":["credit","recognition","acknowledge","not recognized","appreciation","thank you"],
+}
+
+LANGUAGE_TERMS = {
+    "language", "translation", "translate", "translator", "english", "spanish",
+    "french", "german", "polish", "chinese", "japanese", "italian", "portuguese",
+    "dialect", "terminology", "vocabulary", "non native", "non-native",
+    "mother tongue", "linguistic", "multilingual"
+}
 
 MACRO_TO_CANDIDATE_INDIVIDUALS = {
     "Communication and shared understanding breakdowns": [
@@ -23,16 +72,16 @@ MACRO_TO_CANDIDATE_INDIVIDUALS = {
         "COG-011_SystemConfigurationConstraints"
     ],
     "Organizational and procedural workflow constraints": [
-        "CA-001_LackOfCommunicationPlan", "CA-003_LackOfFeedbackChannels",
-        "CA-005_BlockageDueToApprovalRequirements", "CA-006_UnclearRolesAndResponsibilities",
-        "CA-007_InefficientOrganizationalProcesses", "CA-009_ConstraintDueToTicketStatusForReview",
-        "CA-010_BlockageDueToTriageProcess"
+        "CA-005_BlockageDueToApprovalRequirements", "CA-009_ConstraintDueToTicketStatusForReview", 
+        "CA-010_BlockageDueToTriageProcess", "CA-006_UnclearRolesAndResponsibilities", 
+        "CA-007_InefficientOrganizationalProcesses", "CA-001_LackOfCommunicationPlan", 
+        "CA-003_LackOfFeedbackChannels"
     ],
     "Collaboration and interpersonal tensions": [
         "COL-003_InsufficientPeerSupport", "COL-004_LackOfCollaborationOrTeamwork", 
-        "COL-005_LackOfKnowledgeSharing", "COL-006_LackOfTrustAmongTeamMembers", 
-        "CL-001_LowSocialization", "CO-006_PerceivedUnfairnessInInteraction", 
-        "COG-004_LackOfPeerAcknowledgement"
+        "COL-006_LackOfTrustAmongTeamMembers", "CL-001_LowSocialization", 
+        "CO-006_PerceivedUnfairnessInInteraction", "COG-004_LackOfPeerAcknowledgement", 
+        "COL-005_LackOfKnowledgeSharing"
     ],
     "Knowledge, documentation, and standards deficiencies": [
         "CA-004_NoKnowledgeTransferPolicy", "ADM-003_LackOfStandardsOrBestPractices", 
@@ -45,12 +94,8 @@ MACRO_TO_CANDIDATE_INDIVIDUALS = {
 }
 
 CAUSE_KEYWORDS = {
-    "CA-008_LackOfResources": "resources capacity availability people time budget bandwidth unavailable insufficient shortage",
-    "CA-011_RequestForTechnicalValidationSupport": "validation support expert review maintainer approval confirmation technical authority external validation blocked progress cannot continue",
-    "CA-012_RepositoryAccessLimitation": "repository access repo permission permissions fork branch pull request access denied cannot push cannot trigger ci restricted access",
-    "CA-013_InefficientOrInadequateTools": "tool tooling inadequate tools ci logs buildbot automation infrastructure dashboard monitoring test runner flaky tooling limitation",
-    "CO-001_LanguageBarriers": "language dialect terminology vocabulary translation wording naming non native speaker unclear term linguistic barrier",
-    "CO-002_DelayedCommunication": "delayed communication late update late reply waiting information delay response delay slow communication asynchronous delay",
+    "CO-001_LanguageBarriers": "language terminology non native idiom expression grammar dictionary translation meaning linguistic misunderstanding",
+    "CO-002_DelayedCommunication": "delay response delay slow communication asynchronous delay",
     "CO-003_UnclearOrAmbiguousCommunication": "unclear ambiguous incomplete imprecise vague confusing lack context clarification not clear not sure what mean unclear instruction",
     "CO-004_LackOfTimelyFeedbackOrResponse": "feedback response reply no response unanswered follow up waiting review feedback missing response timely feedback",
     "CO-005_MisinterpretationOfInformation": "misinterpretation misunderstood wrong understanding interpreted differently intended meaning incorrect assumption misunderstood requirement",
@@ -84,6 +129,10 @@ CAUSE_KEYWORDS = {
     "CL-001_LowSocialization": "rare interaction little interaction few discussions isolated contributors weak social ties low engagement minimal participation lack of regular communication",
     "CO-006_PerceivedUnfairnessInInteraction": "unfair unfairness unequal treatment bias biased double standard exclusion favoritism not fair unfair process",
     "COG-004_LackOfPeerAcknowledgement": "recognition acknowledgement appreciation credit credited contribution contributions effort achievements ideas not valued not recognized",
+    "CA-008_LackOfResources": "lack of resources low bandwidth not enough time understaffed resource constraint capacity limit",
+    "CA-011_RequestForTechnicalValidationSupport": "request technical validation need review request maintainer review ask for validation approval request validate changes",
+    "CA-012_RepositoryAccessLimitation": "repository access access rights permission denied lack write access read only github permissions cannot merge",
+    "CA-013_InefficientOrInadequateTools": "inefficient tools tooling issues broken tools pipeline failure ci problems bad tools infrastructure failure"
 }
 
 MACRO_CAUSE_DESCRIPTIONS = {
@@ -96,42 +145,136 @@ MACRO_CAUSE_DESCRIPTIONS = {
     "resource, tooling, access, and validation dependencies": "Resource, tooling, access, and validation dependencies. This category refers to lack of resources, dependency on technical validation support, repository access limitations, inefficient or inadequate tools, and collaboration constraints due to repository access."
 }
 
-def classify_specific_causes_topk(macro_label, comment_text=None, top_k=3):
-    macro_key = macro_label.strip().lower() if macro_label else ""
+def normalize(text):
+    if pd.isna(text): return ""
+    text = str(text).lower().strip()
+    text = re.sub(r"[^a-z0-9\s]", "", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+def normalize_for_match(text):
+    text = str(text).lower()
+    text = re.sub(r"[^a-z0-9\s\-]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+def build_macro_semantic_text(macro_label):
+    macro_clean = normalize(macro_label)
+    if macro_clean in MACRO_CAUSE_DESCRIPTIONS:
+        return MACRO_CAUSE_DESCRIPTIONS[macro_clean]
+    return str(macro_label)
+
+def clean_comment_for_embedding(text, max_words=120):
+    if text is None or pd.isna(text): return ""
+    text = str(text)
+    text = re.sub(r"http\S+", " ", text)
+    text = re.sub(r"/url_reference", " ", text)
+    text = re.sub(r"/hash_reference", " ", text)
+    text = re.sub(r"/html_details_block", " ", text)
+    text = re.sub(r"/html_image_reference", " ", text)
+    text = re.sub(r"/inline_code", " inline_code ", text)
+    text = re.sub(r"/code_block_attached", " code_block ", text)
+    text = re.sub(r"/diff_attached", " diff_block ", text)
+    text = re.sub(r"A GitHub user is mentioned", " ", text, flags=re.I)
+    text = re.sub(r"based on the quotation:", " ", text, flags=re.I)
+    text = re.sub(r"\s+", " ", text).strip()
+    words = text.split()
+    return " ".join(words[:max_words])
+
+def build_candidate_cause_text(candidate_row):
+    ontology_id = candidate_row["ontology_id"]
+    keywords = CAUSE_KEYWORDS.get(ontology_id, "")
+    return " ".join([str(candidate_row["cause_name"]), str(candidate_row["cause_description"]), keywords])
+
+def lexical_signal_score(comment_text, ontology_id):
+    if comment_text is None: return 0.0
+    text = normalize_for_match(comment_text)
+    signals = LEXICAL_SIGNALS.get(ontology_id, [])
+    if len(signals) == 0: return 0.0
+    hits = 0
+    for signal in signals:
+        signal = normalize_for_match(signal)
+        if signal in text: hits += 1
+    if hits == 0: return 0.0
+    return min(1.0, hits / 3)
+
+def has_explicit_language_signal(comment_text):
+    if comment_text is None: return False
+    text = normalize_for_match(comment_text)
+    return any(term in text for term in LANGUAGE_TERMS)
+
+def classify_specific_causes_topk(
+    macro_label,
+    comment_text=None,
+    threshold=DEFAULT_THRESHOLD,
+    top_k=DEFAULT_TOP_K,
+    alpha=DEFAULT_ALPHA,
+    lexical_weight=DEFAULT_LEXICAL_WEIGHT,
+):
     candidate_ids = MACRO_TO_CANDIDATE_INDIVIDUALS.get(macro_label, [])
-    
     candidates = [c for c in ontology_causes if c["ontology_id"] in candidate_ids]
+    
     if not candidates:
         return {"top_candidates": []}
-        
-    macro_text = MACRO_CAUSE_DESCRIPTIONS.get(macro_key, str(macro_label))
-    
-    if comment_text:
-        words = str(comment_text).split()
-        short_comment = " ".join(words[:60])
-        query_text = f"GitHub comment evidence:\\n{short_comment}\\n\\nMacro cause context:\\n{macro_text}"
-    else:
-        query_text = macro_text
-        
+
+    macro_semantic_text = build_macro_semantic_text(macro_label)
+    comment_semantic_text = clean_comment_for_embedding(comment_text, max_words=120)
+
+    if comment_semantic_text.strip() == "":
+        comment_semantic_text = macro_semantic_text
+
     candidate_texts = []
     for c in candidates:
-        keywords = CAUSE_KEYWORDS.get(c["ontology_id"], "")
-        text = f"{c['cause_name']} {c['cause_description']} {keywords}"
-        candidate_texts.append(text)
-        
-    query_embedding = model.encode(query_text, convert_to_tensor=True)
+        candidate_texts.append(build_candidate_cause_text(c))
+
+    macro_embedding = model.encode(macro_semantic_text, convert_to_tensor=True)
+    comment_embedding = model.encode(comment_semantic_text, convert_to_tensor=True)
     candidate_embeddings = model.encode(candidate_texts, convert_to_tensor=True)
-    
-    scores = util.cos_sim(query_embedding, candidate_embeddings)[0].tolist()
-    
-    results = []
-    for score, c in zip(scores, candidates):
-        results.append({
-            "ontology_id": c["ontology_id"],
+
+    scores_macro = util.cos_sim(macro_embedding, candidate_embeddings)[0]
+    scores_comment = util.cos_sim(comment_embedding, candidate_embeddings)[0]
+
+    has_language_signal = has_explicit_language_signal(comment_text)
+
+    all_candidates = []
+    for i in range(len(candidates)):
+        c = candidates[i]
+        ontology_id = c["ontology_id"]
+
+        macro_score = float(scores_macro[i].item())
+        comment_score = float(scores_comment[i].item())
+
+        base_score = alpha * macro_score + (1 - alpha) * comment_score
+        lex_bonus = lexical_weight * lexical_signal_score(comment_text, ontology_id)
+        penalty = GENERIC_CAUSE_PENALTY.get(ontology_id, 0.0)
+
+        if ontology_id == "CO-001_LanguageBarriers" and not has_language_signal:
+            penalty += 0.10
+
+        final_score = base_score + lex_bonus - penalty
+        final_score = max(0.0, min(1.0, final_score))
+
+        all_candidates.append({
+            "ontology_id": ontology_id,
             "cause_id": c["cause_id"],
             "specific_cause_name": c["cause_name"],
-            "final_score": score
+            "final_score": final_score
         })
-        
-    results.sort(key=lambda x: x["final_score"], reverse=True)
-    return {"top_candidates": results[:top_k]}
+
+    all_candidates = sorted(all_candidates, key=lambda x: x["final_score"], reverse=True)
+
+    selected = [c for c in all_candidates if c["final_score"] >= threshold]
+    
+    if len(selected) == 0:
+        selected = [all_candidates[0]]
+
+    if len(selected) > 1:
+        best_score = selected[0]["final_score"]
+        selected = [c for c in selected if (best_score - c["final_score"]) <= MAX_SCORE_GAP]
+
+    selected = selected[:top_k]
+
+    if len(selected) == 0:
+        selected = [all_candidates[0]]
+
+    return {"top_candidates": selected}
