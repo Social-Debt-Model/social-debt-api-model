@@ -4,9 +4,11 @@ from app.infrastructure.ontology_client import ontology_causes, enrich_microcaus
 
 try:
     from sentence_transformers import SentenceTransformer
-    model = SentenceTransformer('all-MiniLM-L6-v2')
+    model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 except ImportError:
     model = None
+
+from .keywords import CAUSE_KEYWORDS
 
 MACRO_TO_CANDIDATE_INDIVIDUALS = {
     "A": ["CO-001_LanguageBarriers", "CO-002_DelayedCommunication", "CO-003_UnclearOrAmbiguousCommunication", "CO-004_LackOfTimelyFeedbackOrResponse", "CO-005_MisinterpretationOfInformation"],
@@ -35,8 +37,13 @@ def match_microcauses(text: str, macro_code: str, top_k: int = 3):
 
     text_emb = model.encode([text])
     
-    # Create representations: ID + Name + Description
-    descriptions = [f"{c['cause_id']} {c['cause_name']} {c['cause_description']}" for c in candidates]
+    # Create representations: Name + Description + Keywords
+    descriptions = []
+    for c in candidates:
+        ontology_id = c["ontology_id"]
+        keywords = CAUSE_KEYWORDS.get(ontology_id, "")
+        descriptions.append(f"{c['cause_name']} {c['cause_description']} {keywords}")
+        
     if not descriptions:
         return []
         
