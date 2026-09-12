@@ -179,7 +179,8 @@ def clean_confidence(output: str, default=0.50) -> float:
 
 async def predict_macro_cause(text: str) -> tuple[str, float]:
     """Queries the LLM and parses the response into (Code, Confidence)."""
-    raw_response = await predict(SYSTEM_PROMPT, text)
+    user_prompt = f"Classify the following GitHub comment.\n\nComment:\n{text}\n"
+    raw_response = await predict(SYSTEM_PROMPT, user_prompt)
     code = clean_code(raw_response)
     confidence = clean_confidence(raw_response)
     return code, confidence
