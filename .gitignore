@@ -228,3 +228,4 @@ Icon
 *.local
 app/jobs/
 resultado_api_*.json
+scripts/temp/

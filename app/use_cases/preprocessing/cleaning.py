@@ -1870,3 +1870,4 @@ def replace_ci_and_coverage_reports(text):
         cleaned_lines.append(line)
 
     return "\n".join(cleaned_lines)
+BOT_TAG = "/automated_bot_message"
