@@ -172,18 +172,18 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     author = str(row[author_col]) if author_col and not pd.isna(row.get(author_col)) else ""
                     if pd.isna(row[text_col]) or not text.strip():
                         # Para simplificar el gather, enviamos una tarea dummy que retorna un dict vacío o manejamos después
-                        async def dummy_task(r):
-                            return r, None
-                        tasks.append(dummy_task(row))
+                        async def dummy_task(r, t, a):
+                            return r, t, a, None
+                        tasks.append(dummy_task(row, text, author))
                     else:
                         async def process_task(r, t, a):
                             res = await process_single_comment(t, a)
-                            return r, res
+                            return r, t, a, res
                         tasks.append(process_task(row, text, author))
                 
                 chunk_results = await asyncio.gather(*tasks)
                 
-                for row, res in chunk_results:
+                for row, t, a, res in chunk_results:
                     if res is None:
                         processed += 1
                         continue
@@ -197,10 +197,9 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     row_dict = {
                         "issue_number": iss_val,
                         "comment_id": id_val,
-                        "raw_text": str(row[text_col]) if pd.notna(row.get(text_col)) else ""
+                        "raw_text": t,
+                        "author": a
                     }
-                    if author_col:
-                        row_dict["author"] = str(row.get(author_col, "")) if pd.notna(row.get(author_col)) else ""
 
                     row_dict.update(res)
                     results.append(row_dict)
