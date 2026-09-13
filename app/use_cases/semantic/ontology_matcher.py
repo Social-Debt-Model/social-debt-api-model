@@ -169,9 +169,9 @@ def clean_comment_for_embedding(text, max_words=120):
     text = str(text)
     
     # Tweak: Homologación de formato de Excel del Colab
-    # Replicamos exactamente cómo Pandas procesó el archivo en el Notebook original.
+    # Tweak: homologar mayuscula y multiples repeticiones juntas exactamente como en el notebook del cliente
     text = text.replace("_x000d_", "_x000D_")
-    text = re.sub(r'(_x000D_\s*)+', '_x000D_ ', text)
+    text = re.sub(r'(_x000D_)+', '_x000D_', text)
     
     text = re.sub(r"http\S+", " ", text)
     text = re.sub(r"/url_reference", " ", text)

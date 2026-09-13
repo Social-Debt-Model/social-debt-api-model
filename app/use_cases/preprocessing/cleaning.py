@@ -1572,6 +1572,12 @@ def clean_comment_text(text, author=""):
     if not isinstance(text, str) or not text.strip():
         return ""
 
+    # Tweak: los retornos de carro reales (\r) que SheetJS materializa al leer el Excel
+    # con raw:true deben convertirse al literal "_x000D_" antes de que
+    # normalize_linebreaks_and_tabs los elimine. Esto replica exactamente cómo
+    # el Excel del cliente almacenaba los saltos y cómo el Notebook original los veía.
+    text = text.replace("\r\n", "_x000D_\n").replace("\r", "_x000D_")
+
     text = COMMIT_LINE_REFERENCE_RE.sub(
         "/commit_line_reference",
         text
