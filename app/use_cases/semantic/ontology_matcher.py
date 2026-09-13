@@ -167,6 +167,12 @@ def build_macro_semantic_text(macro_label):
 def clean_comment_for_embedding(text, max_words=120):
     if text is None or pd.isna(text): return ""
     text = str(text)
+    
+    # Tweak: Homologación de formato de Excel del Colab
+    # Replicamos exactamente cómo Pandas procesó el archivo en el Notebook original.
+    text = text.replace("_x000d_", "_x000D_")
+    text = re.sub(r'(_x000D_)+', '_x000D_', text)
+    
     text = re.sub(r"http\S+", " ", text)
     text = re.sub(r"/url_reference", " ", text)
     text = re.sub(r"/hash_reference", " ", text)

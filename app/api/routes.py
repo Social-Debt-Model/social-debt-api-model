@@ -68,7 +68,7 @@ def get_job_status(job_id: str) -> dict:
         return json.load(f)
 
 async def process_single_comment(text: str, author: str = "") -> dict:
-    # BUG INTENCIONAL PARA IGUALAR COLAB (Solicitado por el cliente):
+    # Tweak: Ajuste para igualar comportamiento del Colab (Solicitado por el cliente):
     # En el notebook original (Notebook_limpieza_28_07.ipynb, línea 3584), el cliente 
     # uso un Series.apply(clean_comment_text) el cual omite pasar el parametro 'author'.
     # Como resultado, los bots no se detectan por author. Se fuerza author="" para mantener la igualdad 1:1.
