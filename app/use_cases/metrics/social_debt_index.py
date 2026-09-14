@@ -152,8 +152,8 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
 
     if len(df_issue_adaptive) > 0:
         # HARDCODED GLOBAL QUANTILES FROM COLAB (Cell 22)
-        q1 = 0.20017382534624975
-        q2 = 0.2921888145230001
+        q1 = 0.14200351572358036
+        q2 = 0.41809826083452345
         df_issue_adaptive["social_debt_level"] = df_issue_adaptive["social_debt_index"].apply(lambda x: classify_sdi_level(x, q1, q2))
     else:
         df_issue_adaptive["social_debt_level"] = "Unknown"
