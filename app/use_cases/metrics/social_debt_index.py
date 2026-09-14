@@ -28,8 +28,10 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             smells = []
             risks = []
             for m in c.get("microcauses", []):
-                smells.extend(m.get("community_smells", []))
-                risks.extend(m.get("risks", []))
+                for s in m.get("community_smells", []):
+                    smells.extend([x.strip() for x in str(s).split('|') if x.strip()])
+                for r in m.get("risks", []):
+                    risks.extend([x.strip() for x in str(r).split('|') if x.strip()])
                 
             # REPLICATE COLAB BUG: Convert the entire list of smells/risks into a sorted unique string representation
             smell_repr = str(sorted(list(set(smells)))) if smells else "[]"
