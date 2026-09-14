@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException, BackgroundTasks
+from fastapi import APIRouter, File, UploadFile, HTTPException, BackgroundTasks, Form
 from typing import List, Dict, Any
 import pandas as pd
 import io
@@ -266,7 +266,7 @@ async def classify_text(request: ClassificationRequest):
     return result
 
 @router.post("/classify/batch")
-async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = File(...), instructions: str = Form(None)):
     """
     Sube un archivo CSV o Excel. Retorna un job_id casi instantáneamente.
     """
@@ -323,6 +323,35 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
     author_keywords = ['author', 'user', 'login', 'creator']
     author_col = next((col for col in df.columns if any(kw in col.lower() for kw in author_keywords)), None)
     
+    id_col = None
+    if instructions:
+        try:
+            inst = json.loads(instructions)
+            mapping = inst.get("mapping", {})
+            if mapping.get("comment_col"): text_col = mapping["comment_col"]
+            if mapping.get("issue_col"): issue_col = mapping["issue_col"]
+            if mapping.get("id_col"): id_col = mapping["id_col"]
+            
+            orphan_decision = inst.get("orphan_decision", "individual")
+            if orphan_decision != "individual" and issue_col and issue_col in df.columns:
+                if orphan_decision == "group":
+                    df[issue_col] = df[issue_col].fillna("UNGROUPED-COMMENTS")
+                    df[issue_col] = df[issue_col].replace("", "UNGROUPED-COMMENTS")
+                elif orphan_decision == "discard":
+                    df = df.dropna(subset=[issue_col])
+                    df = df[df[issue_col].astype(str).str.strip() != ""]
+        except Exception as e:
+            print("Error parsing instructions:", e)
+            
+    if not id_col or id_col not in df.columns:
+        df["comment_id"] = [f"auto-id-{i+1}" for i in range(len(df))]
+    else:
+        mask = df[id_col].isna() | (df[id_col].astype(str).str.strip() == "")
+        if mask.any():
+            # Create a copy to avoid SettingWithCopyWarning if any, but loc is fine
+            df.loc[mask, id_col] = [f"auto-id-{i+1}" for i in range(mask.sum())]
+        df["comment_id"] = df[id_col] # Map it so background_batch_process finds it easily
+
     # Generar un ID corto, humano y amigable (ej: "A8K9M2")
     job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
     
