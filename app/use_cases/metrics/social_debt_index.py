@@ -17,7 +17,11 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
     rows = []
     for issue_id, comments in issues_data.items():
         for c in comments:
-            # DO NOT SKIP NOISE! We need them for the total comment count!
+            # En Colab el dataset de entrada ya estaba filtrado por ruido.
+            # Para obtener el mismo 'comment_count' y evitar inflar el SDI, 
+            # debemos ignorar los comentarios de ruido antes de agregar a 'rows'.
+            if c.get("is_noise", False) or c.get("code", "H") == "H":
+                continue
             
             # Extract microcauses
             micro_names = [m.get("cause_name") for m in c.get("microcauses", [])]
