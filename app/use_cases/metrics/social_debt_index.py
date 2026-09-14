@@ -30,6 +30,10 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             for m in c.get("microcauses", []):
                 smells.extend(m.get("community_smells", []))
                 risks.extend(m.get("risks", []))
+                
+            # REPLICATE COLAB BUG: Convert the entire list of smells/risks into a sorted unique string representation
+            smell_repr = str(sorted(list(set(smells)))) if smells else "[]"
+            risk_repr = str(sorted(list(set(risks)))) if risks else "[]"
 
             rows.append({
                 "issue_number": issue_id,
@@ -37,8 +41,8 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
                 "top_microcause_names_list": micro_names,
                 "top_microcause_scores_list": micro_scores,
                 "top_microcause_types_list": micro_types,
-                "community_smells_list": smells,
-                "risks_list": risks,
+                "community_smells_repr": smell_repr,
+                "risks_repr": risk_repr,
                 "comment_body_clean_final": c.get("cleaned_text", "")
             })
 
@@ -66,10 +70,10 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             for m_type in micro_types:
                 if m_type:
                     type_counter[m_type] += 1
-            for smell in row["community_smells_list"]:
-                smell_counter[smell] += 1
-            for risk in row["risks_list"]:
-                risk_counter[risk] += 1
+            if row["community_smells_repr"] != "[]":
+                smell_counter[row["community_smells_repr"]] += 1
+            if row["risks_repr"] != "[]":
+                risk_counter[row["risks_repr"]] += 1
 
         return pd.Series({
             "comment_count": len(group),
@@ -107,11 +111,27 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
         "top_risk_frequency"
     ]
 
-    scaler = MinMaxScaler()
-    normalized_values = scaler.fit_transform(df_issue_adaptive[sdi_features])
-    df_sdi_norm = pd.DataFrame(normalized_values, columns=[f"{col}_norm" for col in sdi_features])
+    # GLOBALS MIN/MAX FROM COLAB DATASET
+    GLOBAL_MIN_MAX = {
+        "comment_count": (1, 19),
+        "macro_diversity": (1, 5),
+        "micro_diversity": (1, 5),
+        "smell_diversity": (1, 5),
+        "risk_diversity": (1, 5),
+        "top_macro_frequency": (1, 13),
+        "top_micro_score": (0.267157, 4.588196000000001),
+        "top_smell_frequency": (1, 9),
+        "top_risk_frequency": (1, 6)
+    }
 
-    df_issue_adaptive = pd.concat([df_issue_adaptive.reset_index(drop=True), df_sdi_norm], axis=1)
+    def global_normalize(val, min_val, max_val):
+        if max_val == min_val:
+            return 0.0
+        return (val - min_val) / (max_val - min_val)
+
+    for col in sdi_features:
+        c_min, c_max = GLOBAL_MIN_MAX[col]
+        df_issue_adaptive[f"{col}_norm"] = df_issue_adaptive[col].apply(lambda x: global_normalize(x, c_min, c_max))
 
     sdi_variables = [
         "comment_count_norm",
@@ -131,8 +151,9 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
         else: return "High Social Debt"
 
     if len(df_issue_adaptive) > 0:
-        q1 = df_issue_adaptive["social_debt_index"].quantile(0.33)
-        q2 = df_issue_adaptive["social_debt_index"].quantile(0.66)
+        # HARDCODED GLOBAL QUANTILES FROM COLAB (Cell 22)
+        q1 = 0.20017382534624975
+        q2 = 0.2921888145230001
         df_issue_adaptive["social_debt_level"] = df_issue_adaptive["social_debt_index"].apply(lambda x: classify_sdi_level(x, q1, q2))
     else:
         df_issue_adaptive["social_debt_level"] = "Unknown"
