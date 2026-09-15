@@ -15,11 +15,15 @@ def top_score(x):
 
 def calculate_batch_sdi(issues_data: dict) -> dict:
     rows = []
+    # Pre-calcular el total de comentarios por issue (incluyendo ruido)
+    # para que comment_count refleje todos los comentarios asociados al issue.
+    total_comments_by_issue = {issue_id: len(comments) for issue_id, comments in issues_data.items()}
+
     for issue_id, comments in issues_data.items():
         for c in comments:
             # En Colab el dataset de entrada ya estaba filtrado por ruido.
-            # Para obtener el mismo 'comment_count' y evitar inflar el SDI, 
-            # debemos ignorar los comentarios de ruido antes de agregar a 'rows'.
+            # Para el SDI se ignoran los comentarios de ruido (H), pero el conteo
+            # total se preserva por separado en total_comments_by_issue.
             if c.get("is_noise", False) or c.get("code", "H") == "H":
                 continue
             
@@ -82,8 +86,8 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
                 risk_counter[row["risks_repr"]] += 1
 
         return pd.Series({
-            "comment_count": len(group),
-            "clean_comment_count": sum(1 for _, r in group.iterrows() if r["final_cause_for_analysis"] != "H"),
+            # clean_comment_count: comentarios que pasaron el filtro de ruido y se usaron en la evaluación SDI
+            "clean_comment_count": len(group),
             "dominant_macrocauses": macro_counter.most_common(5),
             "dominant_microcauses": micro_counter.most_common(5),
             "dominant_microcause_types": type_counter.most_common(5),
@@ -94,6 +98,9 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
 
     # FutureWarning fix for pandas
     df_issue_adaptive = df.groupby("issue_number").apply(aggregate_issue, include_groups=False).reset_index()
+
+    # Agregar el total de comentarios por issue (incluyendo ruido) como comment_count
+    df_issue_adaptive["comment_count"] = df_issue_adaptive["issue_number"].map(total_comments_by_issue).fillna(0).astype(int)
 
     # Calculate diversity and frequencies
     df_issue_adaptive["macro_diversity"] = df_issue_adaptive["dominant_macrocauses"].apply(count_items)
@@ -106,7 +113,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
     df_issue_adaptive["top_risk_frequency"] = df_issue_adaptive["dominant_risks"].apply(top_frequency)
 
     sdi_features = [
-        "comment_count",
+        "clean_comment_count",  # El SDI se normaliza sobre comentarios limpios (igual que en Colab)
         "macro_diversity",
         "micro_diversity",
         "smell_diversity",
@@ -119,7 +126,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
 
     # GLOBALS MIN/MAX FROM COLAB DATASET
     GLOBAL_MIN_MAX = {
-        "comment_count": (1, 19),
+        "clean_comment_count": (1, 19),  # Los quantiles del Colab se basaban en comentarios limpios
         "macro_diversity": (1, 5),
         "micro_diversity": (1, 5),
         "smell_diversity": (1, 5),
@@ -140,7 +147,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
         df_issue_adaptive[f"{col}_norm"] = df_issue_adaptive[col].apply(lambda x: global_normalize(x, c_min, c_max))
 
     sdi_variables = [
-        "comment_count_norm",
+        "clean_comment_count_norm",  # Igual que en Colab: se normaliza sobre comentarios limpios
         "macro_diversity_norm",
         "top_macro_frequency_norm",
         "top_micro_score_norm",
@@ -170,8 +177,8 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
         results[str(iss_id)] = {
             "social_debt_index": float(row["social_debt_index"]) if not pd.isna(row["social_debt_index"]) else 0.0,
             "social_debt_level": row.get("social_debt_level", "Unknown"),
-            "comment_count": int(row["comment_count"]),
-            "clean_comment_count": int(row["clean_comment_count"]),
+            "comment_count": int(row["comment_count"]),          # Total de comentarios del issue (incluyendo ruido)
+            "clean_comment_count": int(row["clean_comment_count"]),  # Solo los que pasaron filtro y se usaron en SDI
             "macro_diversity": int(row["macro_diversity"]),
             "micro_diversity": int(row["micro_diversity"]),
             "smell_diversity": int(row["smell_diversity"]),
