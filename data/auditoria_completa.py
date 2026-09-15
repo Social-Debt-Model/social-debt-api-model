@@ -4,7 +4,7 @@
 AUDITORÍA COMPLETA DE PARIDAD — Social Debt API Model
 =============================================================================
 Compara paso a paso los archivos de referencia del Colab contra los archivos
-de auditoría generados por la API (búsqueda dinámica en el directorio del script).
+de auditoría generados por la API (con detección dinámica de carpetas y archivos).
 
 Uso:
     python3 auditoria_completa.py
@@ -27,7 +27,7 @@ RESET  = "\033[0m"
 # ── Directorio donde se encuentra el script ──────────────────────────────────
 BASE = os.path.dirname(os.path.abspath(__file__))
 
-# ── Helpers de impresión y descubrimiento dinámico ─────────────────────────────
+# ── Helpers de impresión ──────────────────────────────────────────────────────
 def header(title: str):
     w = 70
     print()
@@ -41,7 +41,7 @@ def warn(msg: str):  print(f"  {YELLOW}[WARN]  {msg}{RESET}")
 def info(msg: str):  print(f"     {msg}")
 def section(t: str): print(f"\n  {BOLD}── {t} ──{RESET}")
 
-def find_step_resources(step_num: int):
+def find_step_files(step_num: int):
     subdirs = [d for d in os.listdir(BASE) if os.path.isdir(os.path.join(BASE, d))]
     step_dir_name = None
     for d in subdirs:
@@ -60,9 +60,9 @@ def find_step_resources(step_num: int):
     files = [f for f in os.listdir(full_step_dir) if f.endswith(".xlsx") and not f.startswith("~$")]
     
     if len(files) != 2:
-        print(f"\n{RED}ERROR: Se esperaban exactamente 2 archivos Excel en '{step_dir_name}', pero se encontraron {len(files)}. No es posible determinar con certeza cuál archivo corresponde a Colab y cuál a la API.{RESET}")
+        print(f"\n{RED}ERROR: No se puede ejecutar. Se esperaban exactamente 2 archivos Excel en '{step_dir_name}', pero se encontraron {len(files)}. No es claro cuál archivo es cuál.{RESET}")
         sys.exit(1)
-    
+        
     api_file, colab_file = None, None
     for f in files:
         lf = f.lower()
@@ -85,11 +85,10 @@ def find_step_resources(step_num: int):
         print(f"\n{RED}ERROR: No se pudo distinguir claramente el archivo de auditoría y el de referencia en '{step_dir_name}'.{RESET}")
         sys.exit(1)
         
-    return step_dir_name, colab_file, api_file
+    return os.path.join(step_dir_name, colab_file), os.path.join(step_dir_name, api_file)
 
-def load(step_num: int, filename: str, sheet: str = None) -> pd.DataFrame:
-    step_dir_name, _, _ = find_step_resources(step_num)
-    full = os.path.join(BASE, step_dir_name, filename)
+def load(relpath: str, sheet: str = None) -> pd.DataFrame:
+    full = os.path.join(BASE, relpath)
     if not os.path.exists(full):
         print(f"\n{RED}ERROR: archivo no encontrado → {full}{RESET}")
         sys.exit(1)
@@ -122,13 +121,13 @@ def float_close(a, b, tol=1e-4) -> bool:
 # =============================================================================
 def audit_paso1():
     header("PASO 1 · Limpieza de Texto — Comparación carácter a carácter")
-    _, c_file, a_file = find_step_resources(1)
+    c_file, a_file = find_step_files(1)
 
-    colab = load(1, c_file)
-    api   = load(1, a_file)
+    colab = load(c_file)
+    api   = load(a_file)
 
     section("Conteo de filas")
-    info(f"Colab ({c_file}): {len(colab)} filas  |  API ({a_file}): {len(api)} filas")
+    info(f"Colab ({os.path.basename(c_file)}): {len(colab)} filas  |  API ({os.path.basename(a_file)}): {len(api)} filas")
 
     merged = pd.merge(
         colab[["comment_id", "comment_body_clean_final"]].rename(
@@ -165,6 +164,12 @@ def audit_paso1():
         ok(f"PARIDAD PERFECTA — {total} textos idénticos carácter a carácter")
     else:
         fail(f"{len(diffs)} de {total} textos difieren")
+        for d in diffs[:10]:
+            info(f"  comment_id={d['comment_id']}  primera diferencia en posición {d['char_pos']}")
+            info(f"    Colab: {repr(d['colab'][:80])}")
+            info(f"    API  : {repr(d['api'][:80])}")
+        if len(diffs) > 10:
+            info(f"  … y {len(diffs)-10} más.")
 
     pct = (matches / total * 100) if total > 0 else 0.0
     return matches, total, pct
@@ -175,17 +180,17 @@ def audit_paso1():
 # =============================================================================
 def audit_paso2():
     header("PASO 2 · Detección de Ruido")
-    _, c_file, a_file = find_step_resources(2)
+    c_file, a_file = find_step_files(2)
 
-    colab = load(2, c_file)
-    api   = load(2, a_file)
+    colab = load(c_file)
+    api   = load(a_file)
 
     section("Conteo de filas")
-    info(f"Colab ({c_file}): {len(colab)} filas")
-    info(f"API ({a_file}): {len(api)} filas")
+    info(f"Colab ({os.path.basename(c_file)}) (solo comentarios LIMPIOS): {len(colab)} filas")
+    info(f"API ({os.path.basename(a_file)}) (todos los comentarios):      {len(api)} filas")
 
     api_clean = api[api["is_noise"] == False]
-    info(f"API (is_noise=False): {len(api_clean)} filas")
+    info(f"API (is_noise=False):             {len(api_clean)} filas")
 
     section("Verificación de comment_ids (Colab vs API limpios)")
 
@@ -203,9 +208,17 @@ def audit_paso2():
         ok("Todos los comment_ids del Colab coinciden en la API como comentarios limpios")
     else:
         if solo_colab:
-            fail(f"{len(solo_colab)} comment_ids del Colab NO están en la API como limpios")
+            fail(f"{len(solo_colab)} comment_ids del Colab NO están en la API como limpios:")
+            for cid in list(solo_colab)[:10]:
+                info(f"    {cid}")
         if solo_api:
-            warn(f"{len(solo_api)} comment_ids extra en API")
+            warn(f"{len(solo_api)} comment_ids de la API (limpios) extra (no estaban en Colab):")
+            for cid in list(solo_api)[:10]:
+                info(f"    {cid}")
+
+    section("Distribución de ruido (API)")
+    for lvl, cnt in api["noise_level"].value_counts().items():
+        info(f"  {lvl}: {cnt}")
 
     pct = (matches / total * 100) if total > 0 else 0.0
     return matches, total, pct
@@ -216,16 +229,15 @@ def audit_paso2():
 # =============================================================================
 def audit_paso3():
     header("PASO 3 · Clasificación de Macrocausa — Comparación por comment_id")
-    _, c_file, a_file = find_step_resources(3)
+    c_file, a_file = find_step_files(3)
 
-    colab = load(3, c_file)
-    api   = load(3, a_file)
+    colab = load(c_file)
+    api   = load(a_file)
 
     api_clean = api[api["is_noise"] == False]
 
     section("Conteo de filas")
-    info(f"Colab ({c_file}): {len(colab)} filas")
-    info(f"API ({a_file}): {len(api_clean)} filas (sin ruido)")
+    info(f"Colab ({os.path.basename(c_file)}): {len(colab)} filas  |  API ({os.path.basename(a_file)}) (sin ruido): {len(api_clean)} filas")
 
     merged = pd.merge(
         colab[["comment_id", "final_cause_code"]].rename(
@@ -244,7 +256,10 @@ def audit_paso3():
     if diffs.empty:
         ok(f"PARIDAD PERFECTA — {total} macrocódigos idénticos")
     else:
-        fail(f"{len(diffs)} de {total} comentarios con macrocausa diferente")
+        fail(f"{len(diffs)} de {total} comentarios con macrocausa diferente:")
+        for _, row in diffs.iterrows():
+            info(f"  comment_id={row['comment_id']}  "
+                 f"Colab={row['code_colab']}  API={row['code_api']}")
 
     pct = (matches / total * 100) if total > 0 else 0.0
     return matches, total, pct
@@ -255,10 +270,10 @@ def audit_paso3():
 # =============================================================================
 def audit_paso4():
     header("PASO 4 · Integración Semántica — Microcausas (nombre, orden y score)")
-    _, c_file, a_file = find_step_resources(4)
+    c_file, a_file = find_step_files(4)
 
-    colab = load(4, c_file)
-    api   = load(4, a_file)
+    colab = load(c_file)
+    api   = load(a_file)
 
     api_clean = api[api["is_noise"] == False].sort_values(
         ["issue_number", "comment_id"]).reset_index(drop=True)
@@ -266,8 +281,7 @@ def audit_paso4():
         ["issue_number", "comment_id"]).reset_index(drop=True)
 
     section("Conteo de filas")
-    info(f"Colab ({c_file}): {len(colab_s)} filas")
-    info(f"API ({a_file}): {len(api_clean)} filas (sin ruido)")
+    info(f"Colab ({os.path.basename(c_file)}): {len(colab_s)} filas  |  API ({os.path.basename(a_file)}) (sin ruido): {len(api_clean)} filas")
 
     section("Comparación microcausas 1, 2 y 3 (nombre + score, tolerancia ±0.0001)")
 
@@ -287,11 +301,28 @@ def audit_paso4():
 
             if c_name != a_name:
                 row_ok = False
-                name_diffs.append(1)
+                name_diffs.append({
+                    "comment_id"  : getattr(c_row, "comment_id", i),
+                    "issue_number": getattr(c_row, "issue_number", "?"),
+                    "k": k,
+                    "colab_name": c_name,
+                    "api_name"  : a_name,
+                })
 
             if not float_close(c_score, a_score, SCORE_TOL):
                 row_ok = False
-                score_diffs.append(1)
+                try:
+                    diff_val = abs(float(c_score or 0) - float(a_score or 0))
+                except (ValueError, TypeError):
+                    diff_val = -1
+                score_diffs.append({
+                    "comment_id"  : getattr(c_row, "comment_id", i),
+                    "issue_number": getattr(c_row, "issue_number", "?"),
+                    "k"          : k,
+                    "colab_score": c_score,
+                    "api_score"  : a_score,
+                    "diff"       : diff_val,
+                })
 
         if row_ok:
             perfect += 1
@@ -300,6 +331,20 @@ def audit_paso4():
         ok(f"PARIDAD PERFECTA — {total} comentarios con microcausas idénticas")
     else:
         ok(f"{perfect} de {total} comentarios perfectamente idénticos")
+        if name_diffs:
+            fail(f"{len(name_diffs)} discrepancias de NOMBRE:")
+            for d in name_diffs[:15]:
+                info(f"  comment_id={d['comment_id']} (issue {d['issue_number']}) "
+                     f"· microcausa {d['k']}")
+                info(f"    Colab: {d['colab_name']}")
+                info(f"    API  : {d['api_name']}")
+        if score_diffs:
+            fail(f"{len(score_diffs)} discrepancias de SCORE:")
+            for d in score_diffs[:15]:
+                info(f"  comment_id={d['comment_id']} (issue {d['issue_number']}) "
+                     f"· microcausa {d['k']}")
+                info(f"    Colab={d['colab_score']}  API={d['api_score']}  "
+                     f"diff={d['diff']:.6f}")
 
     pct = (perfect / total * 100) if total > 0 else 0.0
     return perfect, total, pct
@@ -310,14 +355,13 @@ def audit_paso4():
 # =============================================================================
 def audit_paso5():
     header("PASO 5 · Social Debt Index — Comparación de métricas por issue (Tolerancia 5%)")
-    _, c_file, a_file = find_step_resources(5)
+    c_file, a_file = find_step_files(5)
 
-    colab = load(5, c_file)
-    api   = load(5, a_file, sheet="Metricas SDI")
+    colab = load(c_file)
+    api   = load(a_file, sheet="Metricas SDI")
 
     section("Conteo de issues")
-    info(f"Colab ({c_file}): {len(colab)} issues")
-    info(f"API ({a_file}): {len(api)} issues")
+    info(f"Colab ({os.path.basename(c_file)}): {len(colab)} issues  |  API ({os.path.basename(a_file)}): {len(api)} issues")
 
     merged = pd.merge(
         colab[["issue_number", "social_debt_index", "social_debt_level"]].rename(
@@ -327,7 +371,16 @@ def audit_paso5():
         on="issue_number", how="outer"
     )
 
-    common = merged.dropna(subset=["sdi_colab", "sdi_api"]).copy()
+    only_colab = merged[merged["sdi_api"].isna()]
+    only_api   = merged[merged["sdi_colab"].isna()]
+    common     = merged.dropna(subset=["sdi_colab", "sdi_api"]).copy()
+
+    if not only_colab.empty:
+        warn(f"{len(only_colab)} issues en Colab no están en API: "
+             f"{only_colab['issue_number'].tolist()}")
+    if not only_api.empty:
+        warn(f"{len(only_api)} issues en API no están en Colab: "
+             f"{only_api['issue_number'].tolist()}")
 
     section(f"Tabla comparativa ({len(common)} issues en común) · Tolerancia SDI ±5.0 (5%)")
 
