@@ -9,30 +9,25 @@ def count_items(x):
 def top_frequency(x):
     if isinstance(x, list) and len(x) > 0: return x[0][1]
     return 0
+
 def top_score(x):
     if isinstance(x, list) and len(x) > 0: return x[0][1]
     return 0
 
 def calculate_batch_sdi(issues_data: dict) -> dict:
     rows = []
-    # Pre-calcular el total de comentarios por issue (incluyendo ruido)
-    # para que comment_count refleje todos los comentarios asociados al issue.
+    
     total_comments_by_issue = {issue_id: len(comments) for issue_id, comments in issues_data.items()}
 
     for issue_id, comments in issues_data.items():
         for c in comments:
-            # En Colab el dataset de entrada ya estaba filtrado por ruido.
-            # Para el SDI se ignoran los comentarios de ruido (H), pero el conteo
-            # total se preserva por separado en total_comments_by_issue.
             if c.get("is_noise", False) or c.get("code", "H") == "H":
                 continue
             
-            # Extract microcauses
             micro_names = [m.get("cause_name") for m in c.get("microcauses", [])]
             micro_scores = [m.get("similarity", 0.0) for m in c.get("microcauses", [])]
             micro_types = [m.get("cause_type") for m in c.get("microcauses", [])]
 
-            # Extract smells and risks
             smells = []
             risks = []
             for m in c.get("microcauses", []):
@@ -41,7 +36,6 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
                 for r in m.get("risks", []):
                     risks.extend([x.strip() for x in str(r).split('|') if x.strip()])
                 
-            # REPLICATE COLAB BUG: Convert the entire list of smells/risks into a sorted unique string representation
             smell_repr = str(sorted(list(set(smells)))) if smells else "[]"
             risk_repr = str(sorted(list(set(risks)))) if risks else "[]"
 
@@ -86,7 +80,6 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
                 risk_counter[row["risks_repr"]] += 1
 
         return pd.Series({
-            # clean_comment_count: comentarios que pasaron el filtro de ruido y se usaron en la evaluación SDI
             "clean_comment_count": len(group),
             "dominant_macrocauses": macro_counter.most_common(5),
             "dominant_microcauses": micro_counter.most_common(5),
@@ -96,13 +89,10 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             "issue_text": "\n\n".join(group["comment_body_clean_final"].astype(str))
         })
 
-    # FutureWarning fix for pandas
     df_issue_adaptive = df.groupby("issue_number").apply(aggregate_issue, include_groups=False).reset_index()
 
-    # Agregar el total de comentarios por issue (incluyendo ruido) como comment_count
     df_issue_adaptive["comment_count"] = df_issue_adaptive["issue_number"].map(total_comments_by_issue).fillna(0).astype(int)
 
-    # Calculate diversity and frequencies
     df_issue_adaptive["macro_diversity"] = df_issue_adaptive["dominant_macrocauses"].apply(count_items)
     df_issue_adaptive["micro_diversity"] = df_issue_adaptive["dominant_microcauses"].apply(count_items)
     df_issue_adaptive["smell_diversity"] = df_issue_adaptive["dominant_community_smells"].apply(count_items)
@@ -113,7 +103,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
     df_issue_adaptive["top_risk_frequency"] = df_issue_adaptive["dominant_risks"].apply(top_frequency)
 
     sdi_features = [
-        "clean_comment_count",  # El SDI se normaliza sobre comentarios limpios (igual que en Colab)
+        "clean_comment_count", 
         "macro_diversity",
         "micro_diversity",
         "smell_diversity",
@@ -124,73 +114,58 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
         "top_risk_frequency"
     ]
 
-    # GLOBALS MIN/MAX FROM COLAB DATASET
-    GLOBAL_MIN_MAX = {
-        "clean_comment_count": (1, 19),  # Los quantiles del Colab se basaban en comentarios limpios
-        "macro_diversity": (1, 5),
-        "micro_diversity": (1, 5),
-        "smell_diversity": (1, 5),
-        "risk_diversity": (1, 5),
-        "top_macro_frequency": (1, 13),
-        "top_micro_score": (0.267157, 4.588196000000001),
-        "top_smell_frequency": (1, 9),
-        "top_risk_frequency": (1, 6)
-    }
-
-    def global_normalize(val, min_val, max_val):
-        if max_val == min_val:
-            return 0.0
-        return (val - min_val) / (max_val - min_val)
-
-    for col in sdi_features:
-        c_min, c_max = GLOBAL_MIN_MAX[col]
-        df_issue_adaptive[f"{col}_norm"] = df_issue_adaptive[col].apply(lambda x: global_normalize(x, c_min, c_max))
-
-    sdi_variables = [
-        "clean_comment_count_norm",  # Igual que en Colab: se normaliza sobre comentarios limpios
-        "macro_diversity_norm",
-        "top_macro_frequency_norm",
-        "top_micro_score_norm",
-        "top_smell_frequency_norm",
-        "top_risk_frequency_norm"
-    ]
-
-    df_issue_adaptive["social_debt_index"] = df_issue_adaptive[sdi_variables].mean(axis=1)
-
-    def classify_sdi_level(score, q1, q2):
-        if pd.isna(score): return "Unknown"
-        if score <= q1: return "Low Social Debt"
-        elif score <= q2: return "Medium Social Debt"
-        else: return "High Social Debt"
-
+    scaler = MinMaxScaler()
+    
     if len(df_issue_adaptive) > 0:
-        # HARDCODED GLOBAL QUANTILES FROM COLAB (Cell 22)
-        q1 = 0.14200351572358036
-        q2 = 0.41809826083452345
-        df_issue_adaptive["social_debt_level"] = df_issue_adaptive["social_debt_index"].apply(lambda x: classify_sdi_level(x, q1, q2))
+        normalized_values = scaler.fit_transform(df_issue_adaptive[sdi_features])
+        for idx, col in enumerate(sdi_features):
+            df_issue_adaptive[f"{col}_norm"] = normalized_values[:, idx]
+
+        sdi_variables = [
+            "clean_comment_count_norm", 
+            "macro_diversity_norm",
+            "top_macro_frequency_norm",
+            "top_micro_score_norm",
+            "top_smell_frequency_norm",
+            "top_risk_frequency_norm"
+        ]
+
+        df_issue_adaptive["social_debt_index"] = df_issue_adaptive[sdi_variables].mean(axis=1)
+
+        q1 = df_issue_adaptive["social_debt_index"].quantile(0.33)
+        q2 = df_issue_adaptive["social_debt_index"].quantile(0.66)
+        
+        def classify_sdi_level(score):
+            if pd.isna(score): return "Unknown"
+            if score <= q1: return "Low Social Debt"
+            elif score <= q2: return "Medium Social Debt"
+            else: return "High Social Debt"
+
+        df_issue_adaptive["social_debt_level"] = df_issue_adaptive["social_debt_index"].apply(classify_sdi_level)
     else:
+        df_issue_adaptive["social_debt_index"] = 0.0
         df_issue_adaptive["social_debt_level"] = "Unknown"
 
     results = {}
     for _, row in df_issue_adaptive.iterrows():
         iss_id = row["issue_number"]
         results[str(iss_id)] = {
-            "social_debt_index": float(row["social_debt_index"]) if not pd.isna(row["social_debt_index"]) else 0.0,
+            "social_debt_index": float(row.get("social_debt_index", 0.0)) if not pd.isna(row.get("social_debt_index")) else 0.0,
             "social_debt_level": row.get("social_debt_level", "Unknown"),
-            "comment_count": int(row["comment_count"]),          # Total de comentarios del issue (incluyendo ruido)
-            "clean_comment_count": int(row["clean_comment_count"]),  # Solo los que pasaron filtro y se usaron en SDI
-            "macro_diversity": int(row["macro_diversity"]),
-            "micro_diversity": int(row["micro_diversity"]),
-            "smell_diversity": int(row["smell_diversity"]),
-            "risk_diversity": int(row["risk_diversity"]),
-            "top_macro_frequency": int(row["top_macro_frequency"]),
-            "top_micro_score": float(row["top_micro_score"]),
-            "top_smell_frequency": int(row["top_smell_frequency"]),
-            "top_risk_frequency": int(row["top_risk_frequency"]),
-            "dominant_macrocauses": row["dominant_macrocauses"],
-            "dominant_microcauses": row["dominant_microcauses"],
-            "dominant_microcause_types": row["dominant_microcause_types"],
-            "dominant_community_smells": row["dominant_community_smells"],
-            "dominant_risks": row["dominant_risks"]
+            "comment_count": int(row.get("comment_count", 0)),
+            "clean_comment_count": int(row.get("clean_comment_count", 0)),
+            "macro_diversity": int(row.get("macro_diversity", 0)),
+            "micro_diversity": int(row.get("micro_diversity", 0)),
+            "smell_diversity": int(row.get("smell_diversity", 0)),
+            "risk_diversity": int(row.get("risk_diversity", 0)),
+            "top_macro_frequency": int(row.get("top_macro_frequency", 0)),
+            "top_micro_score": float(row.get("top_micro_score", 0.0)),
+            "top_smell_frequency": int(row.get("top_smell_frequency", 0)),
+            "top_risk_frequency": int(row.get("top_risk_frequency", 0)),
+            "dominant_macrocauses": row.get("dominant_macrocauses", []),
+            "dominant_microcauses": row.get("dominant_microcauses", []),
+            "dominant_microcause_types": row.get("dominant_microcause_types", []),
+            "dominant_community_smells": row.get("dominant_community_smells", []),
+            "dominant_risks": row.get("dominant_risks", [])
         }
     return results
