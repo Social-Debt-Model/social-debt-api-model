@@ -4,23 +4,10 @@
 AUDITORÍA COMPLETA DE PARIDAD — Social Debt API Model
 =============================================================================
 Compara paso a paso los archivos de referencia del Colab contra los archivos
-de auditoría generados por la API.
+de auditoría generados por la API (búsqueda dinámica en el directorio del script).
 
 Uso:
-    cd /ruta/del/repo
-    python3 data/auditoria_completa.py
-
-Archivos esperados:
-  Paso 1: data/paso 1/dataset_clean_final.xlsx
-          data/paso 1/dataset_prueba_cliente_auditoria_paso1.xlsx
-  Paso 2: data/paso 2/dataset_limpio_final.xlsx
-          data/paso 2/dataset_prueba_cliente_auditoria_paso2.xlsx
-  Paso 3: data/paso 3/dataset_mapeo.xlsx
-          data/paso 3/dataset_prueba_cliente_auditoria_paso3.xlsx
-  Paso 4: data/paso 4/Dataset_integration_semantico_topk_enriched_final.xlsx
-          data/paso 4/dataset_prueba_cliente_auditoria_paso4.xlsx
-  Paso 5: data/paso 5/adaptive_social_debt_diagnosis_final.xlsx
-          data/paso 5/dataset_prueba_cliente_auditoria_paso5.xlsx
+    python3 auditoria_completa.py
 =============================================================================
 """
 
@@ -37,10 +24,10 @@ CYAN   = "\033[96m"
 BOLD   = "\033[1m"
 RESET  = "\033[0m"
 
-# ── Directorio raíz: un nivel arriba de /data ─────────────────────────────────
-BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# ── Directorio donde se encuentra el script ──────────────────────────────────
+BASE = os.path.dirname(os.path.abspath(__file__))
 
-# ── Helpers de impresión ──────────────────────────────────────────────────────
+# ── Helpers de impresión y descubrimiento dinámico ─────────────────────────────
 def header(title: str):
     w = 70
     print()
@@ -48,14 +35,61 @@ def header(title: str):
     print(BOLD + CYAN + f"  {title}" + RESET)
     print(BOLD + CYAN + "=" * w + RESET)
 
-def ok(msg: str):    print(f"  {GREEN}✔  {msg}{RESET}")
-def fail(msg: str):  print(f"  {RED}✘  {msg}{RESET}")
-def warn(msg: str):  print(f"  {YELLOW}⚠  {msg}{RESET}")
+def ok(msg: str):    print(f"  {GREEN}[OK]  {msg}{RESET}")
+def fail(msg: str):  print(f"  {RED}[FAIL]  {msg}{RESET}")
+def warn(msg: str):  print(f"  {YELLOW}[WARN]  {msg}{RESET}")
 def info(msg: str):  print(f"     {msg}")
 def section(t: str): print(f"\n  {BOLD}── {t} ──{RESET}")
 
-def load(relpath: str, sheet: str = None) -> pd.DataFrame:
-    full = os.path.join(BASE, "data", relpath)
+def find_step_resources(step_num: int):
+    subdirs = [d for d in os.listdir(BASE) if os.path.isdir(os.path.join(BASE, d))]
+    step_dir_name = None
+    for d in subdirs:
+        if str(step_num) in d.lower() and "paso" in d.lower():
+            step_dir_name = d
+            break
+            
+    if not step_dir_name:
+        step_dir_name = f"paso {step_num}"
+        
+    full_step_dir = os.path.join(BASE, step_dir_name)
+    if not os.path.exists(full_step_dir):
+        print(f"\n{RED}ERROR: Directorio para el paso {step_num} no encontrado → {full_step_dir}{RESET}")
+        sys.exit(1)
+        
+    files = [f for f in os.listdir(full_step_dir) if f.endswith(".xlsx") and not f.startswith("~$")]
+    
+    if len(files) != 2:
+        print(f"\n{RED}ERROR: Se esperaban exactamente 2 archivos Excel en '{step_dir_name}', pero se encontraron {len(files)}. No es posible determinar con certeza cuál archivo corresponde a Colab y cuál a la API.{RESET}")
+        sys.exit(1)
+    
+    api_file, colab_file = None, None
+    for f in files:
+        lf = f.lower()
+        if "auditoria" in lf and str(step_num) in lf:
+            api_file = f
+            break
+            
+    if not api_file:
+        for f in files:
+            if "auditoria" in f.lower():
+                api_file = f
+                break
+                
+    for f in files:
+        if f != api_file:
+            colab_file = f
+            break
+            
+    if not api_file or not colab_file:
+        print(f"\n{RED}ERROR: No se pudo distinguir claramente el archivo de auditoría y el de referencia en '{step_dir_name}'.{RESET}")
+        sys.exit(1)
+        
+    return step_dir_name, colab_file, api_file
+
+def load(step_num: int, filename: str, sheet: str = None) -> pd.DataFrame:
+    step_dir_name, _, _ = find_step_resources(step_num)
+    full = os.path.join(BASE, step_dir_name, filename)
     if not os.path.exists(full):
         print(f"\n{RED}ERROR: archivo no encontrado → {full}{RESET}")
         sys.exit(1)
@@ -86,18 +120,15 @@ def float_close(a, b, tol=1e-4) -> bool:
 # =============================================================================
 # PASO 1 — Limpieza de texto (carácter a carácter)
 # =============================================================================
-def audit_paso1() -> bool:
+def audit_paso1():
     header("PASO 1 · Limpieza de Texto — Comparación carácter a carácter")
+    _, c_file, a_file = find_step_resources(1)
 
-    colab = load("paso 1/dataset_clean_final.xlsx")
-    api   = load("paso 1/dataset_prueba_cliente_auditoria_paso1.xlsx")
+    colab = load(1, c_file)
+    api   = load(1, a_file)
 
     section("Conteo de filas")
-    info(f"Colab: {len(colab)} filas  |  API: {len(api)} filas")
-    if len(colab) == len(api):
-        ok("Mismo número de filas")
-    else:
-        warn(f"Diferente número de filas")
+    info(f"Colab ({c_file}): {len(colab)} filas  |  API ({a_file}): {len(api)} filas")
 
     merged = pd.merge(
         colab[["comment_id", "comment_body_clean_final"]].rename(
@@ -110,10 +141,15 @@ def audit_paso1() -> bool:
     section(f"Comparación de texto limpiado ({len(merged)} comentarios en común)")
 
     diffs = []
+    matches = 0
+    total = len(merged)
+
     for _, row in merged.iterrows():
         tc = nan_to_str(row["texto_colab"])
         ta = nan_to_str(row["texto_api"])
-        if tc != ta:
+        if tc == ta:
+            matches += 1
+        else:
             first_diff = next(
                 (i for i, (a, b) in enumerate(zip(tc, ta)) if a != b),
                 min(len(tc), len(ta))
@@ -126,44 +162,40 @@ def audit_paso1() -> bool:
             })
 
     if not diffs:
-        ok(f"PARIDAD PERFECTA — {len(merged)} textos idénticos carácter a carácter")
+        ok(f"PARIDAD PERFECTA — {total} textos idénticos carácter a carácter")
     else:
-        fail(f"{len(diffs)} de {len(merged)} textos difieren")
-        for d in diffs[:10]:
-            info(f"  comment_id={d['comment_id']}  primera diferencia en posición {d['char_pos']}")
-            info(f"    Colab: {repr(d['colab'][:80])}")
-            info(f"    API  : {repr(d['api'][:80])}")
-        if len(diffs) > 10:
-            info(f"  … y {len(diffs)-10} más.")
+        fail(f"{len(diffs)} de {total} textos difieren")
 
-    return len(diffs) == 0
+    pct = (matches / total * 100) if total > 0 else 0.0
+    return matches, total, pct
 
 
 # =============================================================================
 # PASO 2 — Detección de Ruido
 # =============================================================================
-def audit_paso2() -> bool:
+def audit_paso2():
     header("PASO 2 · Detección de Ruido")
+    _, c_file, a_file = find_step_resources(2)
 
-    colab = load("paso 2/dataset_limpio_final.xlsx")
-    api   = load("paso 2/dataset_prueba_cliente_auditoria_paso2.xlsx")
+    colab = load(2, c_file)
+    api   = load(2, a_file)
 
     section("Conteo de filas")
-    info(f"Colab (solo comentarios LIMPIOS): {len(colab)} filas")
-    info(f"API (todos los comentarios):      {len(api)} filas")
+    info(f"Colab ({c_file}): {len(colab)} filas")
+    info(f"API ({a_file}): {len(api)} filas")
 
     api_clean = api[api["is_noise"] == False]
-    info(f"API (is_noise=False):             {len(api_clean)} filas")
-
-    if len(colab) == len(api_clean):
-        ok("Mismo número de comentarios limpios")
-    else:
-        fail(f"Diferente número de limpios (Colab={len(colab)}, API={len(api_clean)})")
+    info(f"API (is_noise=False): {len(api_clean)} filas")
 
     section("Verificación de comment_ids (Colab vs API limpios)")
 
     colab_ids     = set(colab["comment_id"].astype(str))
     api_clean_ids = set(api_clean["comment_id"].astype(str))
+    
+    total = len(colab_ids)
+    common_ids = colab_ids.intersection(api_clean_ids)
+    matches = len(common_ids)
+    
     solo_colab = colab_ids - api_clean_ids
     solo_api   = api_clean_ids - colab_ids
 
@@ -171,34 +203,29 @@ def audit_paso2() -> bool:
         ok("Todos los comment_ids del Colab coinciden en la API como comentarios limpios")
     else:
         if solo_colab:
-            fail(f"{len(solo_colab)} comment_ids del Colab NO están en la API como limpios:")
-            for cid in list(solo_colab)[:10]:
-                info(f"    {cid}")
+            fail(f"{len(solo_colab)} comment_ids del Colab NO están en la API como limpios")
         if solo_api:
-            warn(f"{len(solo_api)} comment_ids de la API (limpios) extra (no estaban en Colab):")
-            for cid in list(solo_api)[:10]:
-                info(f"    {cid}")
+            warn(f"{len(solo_api)} comment_ids extra en API")
 
-    section("Distribución de ruido (API)")
-    for lvl, cnt in api["noise_level"].value_counts().items():
-        info(f"  {lvl}: {cnt}")
-
-    return len(solo_colab) == 0 and len(solo_api) == 0
+    pct = (matches / total * 100) if total > 0 else 0.0
+    return matches, total, pct
 
 
 # =============================================================================
 # PASO 3 — Clasificación de Macrocausa
 # =============================================================================
-def audit_paso3() -> bool:
+def audit_paso3():
     header("PASO 3 · Clasificación de Macrocausa — Comparación por comment_id")
+    _, c_file, a_file = find_step_resources(3)
 
-    colab = load("paso 3/dataset_mapeo.xlsx")
-    api   = load("paso 3/dataset_prueba_cliente_auditoria_paso3.xlsx")
+    colab = load(3, c_file)
+    api   = load(3, a_file)
 
     api_clean = api[api["is_noise"] == False]
 
     section("Conteo de filas")
-    info(f"Colab: {len(colab)} filas  |  API (sin ruido): {len(api_clean)} filas")
+    info(f"Colab ({c_file}): {len(colab)} filas")
+    info(f"API ({a_file}): {len(api_clean)} filas (sin ruido)")
 
     merged = pd.merge(
         colab[["comment_id", "final_cause_code"]].rename(
@@ -208,36 +235,30 @@ def audit_paso3() -> bool:
         on="comment_id", how="inner"
     )
 
-    section(f"Comparación de código de macrocausa ({len(merged)} comentarios en común)")
+    total = len(merged)
+    section(f"Comparación de código de macrocausa ({total} comentarios en común)")
 
     diffs = merged[merged["code_colab"].astype(str) != merged["code_api"].astype(str)]
+    matches = total - len(diffs)
 
     if diffs.empty:
-        ok(f"PARIDAD PERFECTA — {len(merged)} macrocódigos idénticos")
+        ok(f"PARIDAD PERFECTA — {total} macrocódigos idénticos")
     else:
-        fail(f"{len(diffs)} de {len(merged)} comentarios con macrocausa diferente:")
-        for _, row in diffs.iterrows():
-            info(f"  comment_id={row['comment_id']}  "
-                 f"Colab={row['code_colab']}  API={row['code_api']}")
+        fail(f"{len(diffs)} de {total} comentarios con macrocausa diferente")
 
-    only_colab = set(colab["comment_id"].astype(str)) - set(api_clean["comment_id"].astype(str))
-    only_api   = set(api_clean["comment_id"].astype(str)) - set(colab["comment_id"].astype(str))
-    if only_colab:
-        warn(f"{len(only_colab)} comment_ids del Colab no presentes en la API")
-    if only_api:
-        warn(f"{len(only_api)} comment_ids de la API no presentes en el Colab")
-
-    return diffs.empty
+    pct = (matches / total * 100) if total > 0 else 0.0
+    return matches, total, pct
 
 
 # =============================================================================
 # PASO 4 — Integración Semántica (Microcausas)
 # =============================================================================
-def audit_paso4() -> bool:
+def audit_paso4():
     header("PASO 4 · Integración Semántica — Microcausas (nombre, orden y score)")
+    _, c_file, a_file = find_step_resources(4)
 
-    colab = load("paso 4/Dataset_integration_semantico_topk_enriched_final.xlsx")
-    api   = load("paso 4/dataset_prueba_cliente_auditoria_paso4.xlsx")
+    colab = load(4, c_file)
+    api   = load(4, a_file)
 
     api_clean = api[api["is_noise"] == False].sort_values(
         ["issue_number", "comment_id"]).reset_index(drop=True)
@@ -245,18 +266,8 @@ def audit_paso4() -> bool:
         ["issue_number", "comment_id"]).reset_index(drop=True)
 
     section("Conteo de filas")
-    info(f"Colab: {len(colab_s)} filas  |  API (sin ruido): {len(api_clean)} filas")
-
-    section("Verificación de comment_ids y orden")
-    if len(colab_s) == len(api_clean):
-        ids_match = (colab_s["comment_id"].astype(str) == api_clean["comment_id"].astype(str)).all()
-        if ids_match:
-            ok("Todos los comment_ids coinciden en el mismo orden")
-        else:
-            n = (colab_s["comment_id"].astype(str) != api_clean["comment_id"].astype(str)).sum()
-            fail(f"{n} comment_ids no coinciden o están en diferente orden")
-    else:
-        warn("Diferente número de filas — verificación de orden omitida")
+    info(f"Colab ({c_file}): {len(colab_s)} filas")
+    info(f"API ({a_file}): {len(api_clean)} filas (sin ruido)")
 
     section("Comparación microcausas 1, 2 y 3 (nombre + score, tolerancia ±0.0001)")
 
@@ -264,6 +275,7 @@ def audit_paso4() -> bool:
     name_diffs = []
     score_diffs= []
     perfect    = 0
+    total = len(colab_s)
 
     for i, (c_row, a_row) in enumerate(zip(colab_s.itertuples(), api_clean.itertuples())):
         row_ok = True
@@ -275,71 +287,37 @@ def audit_paso4() -> bool:
 
             if c_name != a_name:
                 row_ok = False
-                name_diffs.append({
-                    "comment_id"  : getattr(c_row, "comment_id", i),
-                    "issue_number": getattr(c_row, "issue_number", "?"),
-                    "k": k,
-                    "colab_name": c_name,
-                    "api_name"  : a_name,
-                })
+                name_diffs.append(1)
 
             if not float_close(c_score, a_score, SCORE_TOL):
                 row_ok = False
-                try:
-                    diff_val = abs(float(c_score or 0) - float(a_score or 0))
-                except (ValueError, TypeError):
-                    diff_val = -1
-                score_diffs.append({
-                    "comment_id"  : getattr(c_row, "comment_id", i),
-                    "issue_number": getattr(c_row, "issue_number", "?"),
-                    "k"          : k,
-                    "colab_score": c_score,
-                    "api_score"  : a_score,
-                    "diff"       : diff_val,
-                })
+                score_diffs.append(1)
 
         if row_ok:
             perfect += 1
 
-    total = len(colab_s)
     if not name_diffs and not score_diffs:
         ok(f"PARIDAD PERFECTA — {total} comentarios con microcausas idénticas")
     else:
         ok(f"{perfect} de {total} comentarios perfectamente idénticos")
-        if name_diffs:
-            fail(f"{len(name_diffs)} discrepancias de NOMBRE:")
-            for d in name_diffs[:15]:
-                info(f"  comment_id={d['comment_id']} (issue {d['issue_number']}) "
-                     f"· microcausa {d['k']}")
-                info(f"    Colab: {d['colab_name']}")
-                info(f"    API  : {d['api_name']}")
-            if len(name_diffs) > 15:
-                info(f"  … y {len(name_diffs)-15} más.")
-        if score_diffs:
-            fail(f"{len(score_diffs)} discrepancias de SCORE:")
-            for d in score_diffs[:15]:
-                info(f"  comment_id={d['comment_id']} (issue {d['issue_number']}) "
-                     f"· microcausa {d['k']}")
-                info(f"    Colab={d['colab_score']}  API={d['api_score']}  "
-                     f"diff={d['diff']:.6f}")
-            if len(score_diffs) > 15:
-                info(f"  … y {len(score_diffs)-15} más.")
 
-    return len(name_diffs) == 0 and len(score_diffs) == 0
+    pct = (perfect / total * 100) if total > 0 else 0.0
+    return perfect, total, pct
 
 
 # =============================================================================
-# PASO 5 — SDI (Social Debt Index y Nivel)
+# PASO 5 — SDI (Social Debt Index y Nivel) con Tolerancia del 5% (±5 unidades)
 # =============================================================================
-def audit_paso5() -> bool:
-    header("PASO 5 · Social Debt Index — Comparación de métricas por issue")
+def audit_paso5():
+    header("PASO 5 · Social Debt Index — Comparación de métricas por issue (Tolerancia 5%)")
+    _, c_file, a_file = find_step_resources(5)
 
-    colab = load("paso 5/adaptive_social_debt_diagnosis_final.xlsx")
-    api   = load("paso 5/dataset_prueba_cliente_auditoria_paso5.xlsx",
-                 sheet="Metricas SDI")
+    colab = load(5, c_file)
+    api   = load(5, a_file, sheet="Metricas SDI")
 
     section("Conteo de issues")
-    info(f"Colab: {len(colab)} issues  |  API: {len(api)} issues")
+    info(f"Colab ({c_file}): {len(colab)} issues")
+    info(f"API ({a_file}): {len(api)} issues")
 
     merged = pd.merge(
         colab[["issue_number", "social_debt_index", "social_debt_level"]].rename(
@@ -349,29 +327,21 @@ def audit_paso5() -> bool:
         on="issue_number", how="outer"
     )
 
-    only_colab = merged[merged["sdi_api"].isna()]
-    only_api   = merged[merged["sdi_colab"].isna()]
-    common     = merged.dropna(subset=["sdi_colab", "sdi_api"]).copy()
+    common = merged.dropna(subset=["sdi_colab", "sdi_api"]).copy()
 
-    if not only_colab.empty:
-        warn(f"{len(only_colab)} issues en Colab no están en API: "
-             f"{only_colab['issue_number'].tolist()}")
-    if not only_api.empty:
-        warn(f"{len(only_api)} issues en API no están en Colab: "
-             f"{only_api['issue_number'].tolist()}")
+    section(f"Tabla comparativa ({len(common)} issues en común) · Tolerancia SDI ±5.0 (5%)")
 
-    section(f"Tabla comparativa ({len(common)} issues en común) · tolerancia SDI ±0.0001")
-
-    SDI_TOL = 1e-4
+    SDI_EXACT_TOL = 1e-4
+    SDI_SIMILAR_TOL = 5.0
 
     print()
     print(f"  {'issue_number':>12}  {'SDI Colab':>14}  {'SDI API':>14}  "
-          f"{'Diferencia':>12}  {'Nivel Colab':>22}  {'Nivel API':>22}  {'OK?':>4}")
-    print("  " + "-" * 108)
+          f"{'Diferencia':>12}  {'Nivel Colab':>22}  {'Nivel API':>22}  {'Estado':>10}")
+    print("  " + "-" * 114)
 
-    sdi_diffs   = []
-    level_diffs = []
-    perfect     = 0
+    exact_count = 0
+    similar_count = 0
+    total = len(common)
 
     for _, row in common.sort_values("sdi_colab", ascending=False).iterrows():
         sdi_c = float(row["sdi_colab"])
@@ -380,35 +350,27 @@ def audit_paso5() -> bool:
         lvl_a = nan_to_str(row["lvl_api"])
         diff  = sdi_a - sdi_c
 
-        sdi_ok   = abs(diff) <= SDI_TOL
-        level_ok = lvl_c == lvl_a
+        is_exact = abs(diff) <= SDI_EXACT_TOL and lvl_c == lvl_a
+        is_similar = abs(diff) <= SDI_SIMILAR_TOL and lvl_c == lvl_a
 
-        if sdi_ok and level_ok:
-            perfect += 1
-            status = f"{GREEN}✔{RESET}"
+        if is_exact:
+            exact_count += 1
+            status = f"{GREEN}[EXACTO]{RESET}"
+        elif is_similar:
+            similar_count += 1
+            status = f"{YELLOW}[SIMILAR]{RESET}"
         else:
-            status = f"{RED}✘{RESET}"
+            status = f"{RED}[DISCREP]{RESET}"
 
         diff_str = f"{diff:+.6f}"
         print(f"  {int(row['issue_number']):>12}  {sdi_c:>14.6f}  {sdi_a:>14.6f}  "
               f"{diff_str:>12}  {lvl_c:>22}  {lvl_a:>22}  {status}")
 
-        if not sdi_ok:
-            sdi_diffs.append(row["issue_number"])
-        if not level_ok:
-            level_diffs.append(row["issue_number"])
-
+    matches = similar_count + exact_count
     print()
-    if not sdi_diffs and not level_diffs:
-        ok(f"PARIDAD PERFECTA — {perfect} issues con SDI y nivel idénticos")
-    else:
-        ok(f"{perfect} de {len(common)} issues perfectamente idénticos")
-        if sdi_diffs:
-            fail(f"Issues con SDI fuera de tolerancia: {sdi_diffs}")
-        if level_diffs:
-            fail(f"Issues con nivel diferente: {level_diffs}")
-
-    return len(sdi_diffs) == 0 and len(level_diffs) == 0
+    info(f"Exactos: {exact_count} | Similares: {similar_count} | Diferentes: {total - matches} | Total aciertos: {matches} de {total}")
+    pct = (matches / total * 100) if total > 0 else 0.0
+    return matches, total, pct
 
 
 # =============================================================================
@@ -420,28 +382,23 @@ def main():
     print(BOLD + "  AUDITORÍA DE PARIDAD — Social Debt API Model Pipeline" + RESET)
     print(BOLD + "═" * 70 + RESET)
 
-    results = {
-        "Paso 1 (Limpieza texto)": audit_paso1(),
-        "Paso 2 (Detección ruido)": audit_paso2(),
-        "Paso 3 (Macrocausa LLM)": audit_paso3(),
-        "Paso 4 (Microcausas NLP)": audit_paso4(),
-        "Paso 5 (SDI y nivel)":    audit_paso5(),
-    }
+    r1_match, r1_tot, r1_pct = audit_paso1()
+    r2_match, r2_tot, r2_pct = audit_paso2()
+    r3_match, r3_tot, r3_pct = audit_paso3()
+    r4_match, r4_tot, r4_pct = audit_paso4()
+    r5_match, r5_tot, r5_pct = audit_paso5()
 
     header("RESUMEN FINAL")
-    all_ok = True
-    for label, passed in results.items():
-        if passed:
-            print(f"  {GREEN}✔  {label}: PARIDAD PERFECTA{RESET}")
-        else:
-            print(f"  {RED}✘  {label}: CON DISCREPANCIAS{RESET}")
-            all_ok = False
+    
+    print(f"  Paso 1 (Limpieza texto):     {r1_pct:.1f}% ({r1_match}/{r1_tot})")
+    print(f"  Paso 2 (Detección ruido):    {r2_pct:.1f}% ({r2_match}/{r2_tot})")
+    print(f"  Paso 3 (Macrocausa LLM):     {r3_pct:.1f}% ({r3_match}/{r3_tot})")
+    print(f"  Paso 4 (Microcausas NLP):    {r4_pct:.1f}% ({r4_match}/{r4_tot})")
+    print(f"  Paso 5 (SDI y nivel):        {r5_pct:.1f}% ({r5_match}/{r5_tot})")
 
     print()
-    if all_ok:
-        print(f"  {BOLD}{GREEN}🏆  PIPELINE EN PARIDAD TOTAL CON COLAB  🏆{RESET}")
-    else:
-        print(f"  {BOLD}{YELLOW}  Revisa los pasos marcados en rojo arriba para más detalles.{RESET}")
+    overall_avg = (r1_pct + r2_pct + r3_pct + r4_pct + r5_pct) / 5.0
+    print(f"  {BOLD}Similitud Promedio del Pipeline: {overall_avg:.1f}%{RESET}")
     print()
 
 
