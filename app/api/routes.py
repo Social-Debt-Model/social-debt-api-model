@@ -127,21 +127,19 @@ async def process_single_comment(text: str, author: str = "") -> dict:
 async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str, issue_col: str, author_col: str = None):
     global active_job_state
     
-    logger.info(f"[JOB {job_id}] Ingresando a la cola de procesamiento asincrono.")
-    
     async with batch_lock:
         try:
-            logger.info(f"[JOB {job_id}] Inicio de procesamiento exclusivo (Lock adquirido).")
-            
             initial_status = get_job_status(job_id)
             if initial_status and initial_status.get("status") == "cancelled":
-                logger.info(f"[JOB {job_id}] Detectado como cancelado antes de iniciar. Abortando.")
+                logger.info(f"[JOB {job_id}] Cancelado antes de iniciar.")
                 return
                 
             results = []
             issues_data = {}
             total = len(df)
             processed = 0
+            
+            logger.info(f"[JOB {job_id}] Procesando lote ({total} filas).")
             
             active_job_state["job_id"] = job_id
             active_job_state["total_comments"] = total
@@ -161,7 +159,7 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
             for i in range(0, total, chunk_size):
                 current_status = get_job_status(job_id)
                 if current_status and current_status.get("status") == "cancelled":
-                    logger.info(f"[JOB {job_id}] Cancelacion detectada en el chunk {i}. Interrumpiendo ciclo.")
+                    logger.info(f"[JOB {job_id}] Cancelado por el usuario en ejecucion.")
                     active_job_state["job_id"] = None
                     return
                     
@@ -219,7 +217,7 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                 
                 post_chunk_status = get_job_status(job_id)
                 if post_chunk_status and post_chunk_status.get("status") == "cancelled":
-                    logger.info(f"[JOB {job_id}] Cancelacion detectada despues de procesar el chunk {i}. Abortando.")
+                    logger.info(f"[JOB {job_id}] Cancelado por el usuario en ejecucion.")
                     active_job_state["job_id"] = None
                     return
                 
@@ -232,12 +230,10 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     "progress": f"{processed} de {total} comentarios procesados ({percent}%)",
                     "processed": processed
                 })
-                
-                logger.info(f"[JOB {job_id}] Progreso: {processed}/{total} ({percent}%)")
                     
             final_status = get_job_status(job_id)
             if final_status and final_status.get("status") == "cancelled":
-                logger.info(f"[JOB {job_id}] Cancelacion detectada justo antes de finalizar el reporte. Abortando.")
+                logger.info(f"[JOB {job_id}] Cancelado por el usuario en ejecucion.")
                 active_job_state["job_id"] = None
                 return
 
@@ -245,7 +241,6 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
             
             sdi_results = {}
             if issue_col:
-                logger.info(f"[JOB {job_id}] Calculando metricas SDI finales.")
                 sdi_results = calculate_batch_sdi(issues_data)
                 response_data["issues_metrics"] = sdi_results
                 
@@ -255,7 +250,7 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                 "result": response_data
             })
             
-            logger.info(f"[JOB {job_id}] Tarea completada con exito.")
+            logger.info(f"[JOB {job_id}] Completado exitosamente.")
             active_job_state["job_id"] = None
             
         except Exception as e:
@@ -268,15 +263,12 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
 
 @router.post("/classify/text", response_model=dict)
 async def classify_text(request: ClassificationRequest):
-    logger.info(f"Peticion de clasificacion individual recibida. Texto (snippet): '{request.text[:40]}...'")
     result = await process_single_comment(request.text)
-    logger.info(f"Clasificacion individual finalizada: Causa {result.get('macro_cause_code')}, Ruido: {result.get('is_noise')}")
+    logger.info("Clasificacion individual procesada.")
     return result
 
 @router.post("/classify/batch")
 async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = File(...), instructions: str = Form(None)):
-    logger.info(f"Peticion de clasificacion por lotes recibida. Archivo: {file.filename}")
-    
     file_bytes = await file.read()
     if file.filename.endswith('.csv'):
         try:
@@ -288,7 +280,6 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
     elif file.filename.endswith('.xlsx') or file.filename.endswith('.xls'):
         df = pd.read_excel(io.BytesIO(file_bytes))
     else:
-        logger.warning(f"Archivo rechazado (Formato invalido): {file.filename}")
         raise HTTPException(status_code=400, detail="Only CSV or Excel files are supported")
         
     text_keywords = ['body', 'text', 'content', 'description', 'comment']
@@ -302,12 +293,10 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
             break
             
     if not text_col:
-        logger.warning(f"Archivo rechazado (No se encontro columna de texto): {file.filename}")
         raise HTTPException(status_code=400, detail="Could not find a text column")
         
     limits_response = await check_openai_limits()
     if limits_response.get("status") == "rate_limit_exceeded":
-        logger.warning("Peticion de lote rechazada: Cuota de OpenAI agotada.")
         raise HTTPException(status_code=429, detail="Cuota de OpenAI agotada o limite excedido. Intenta mas tarde.")
         
     limits = limits_response.get("limits", {})
@@ -318,7 +307,6 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
         rem_req = 0
         
     if len(df) > rem_req:
-        logger.warning(f"Archivo rechazado: Contiene {len(df)} comentarios pero el limite actual es {rem_req}.")
         raise HTTPException(
             status_code=400, 
             detail=f"El archivo tiene {len(df)} comentarios, pero tu cuota actual de OpenAI solo permite {rem_req} peticiones."
@@ -360,7 +348,7 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
 
     job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
     
-    logger.info(f"[JOB {job_id}] Trabajo registrado exitosamente. Filas: {len(df)}. Mapeo - Text: '{text_col}', Issue: '{issue_col}'")
+    logger.info(f"[JOB {job_id}] Lote registrado: {file.filename}")
     
     update_job_status(job_id, {
         "job_id": job_id,
@@ -374,7 +362,7 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
     return {
         "job_id": job_id,
         "status": "pending",
-        "message": "Tu archivo se esta procesando. Consulta el estado con el job_id en el endpoint GET /classify/batch/{job_id}."
+        "message": "Tu archivo se esta procesando."
     }
 
 @router.get("/classify/batch/{job_id}")
@@ -455,22 +443,17 @@ class CancelRequest(BaseModel):
 
 @router.post("/classify/batch/cancel")
 async def cancel_batch(req: CancelRequest):
-    logger.info(f"Peticion de cancelacion recibida para el trabajo: {req.job_id}")
     status_data = get_job_status(req.job_id)
     if not status_data:
-        logger.warning(f"Intento de cancelacion fallido. El trabajo {req.job_id} no existe.")
         raise HTTPException(status_code=404, detail="Job not found")
         
     current = status_data.get("status")
     if current in ["completed", "failed", "cancelled"]:
-        logger.info(f"El trabajo {req.job_id} ya se encontraba en estado terminal: {current}.")
         return {"message": f"Job is already {current}"}
         
     update_job_status(req.job_id, {"status": "cancelled"})
-    logger.info(f"El estado del trabajo {req.job_id} fue forzado a 'cancelled'.")
     
     if active_job_state["job_id"] == req.job_id:
         active_job_state["job_id"] = None
-        logger.info(f"El trabajo {req.job_id} fue removido del active_job_state global.")
         
     return {"message": "Job cancelled successfully"}
