@@ -35,7 +35,7 @@ def match_microcauses(text: str, macro_code: str, top_k: int = 3):
     if not candidates:
         candidates = ontology_causes
 
-    text_emb = model.encode([text])
+    text_emb = model.encode([text], show_progress_bar=False)
     
     # Create representations: Name + Description + Keywords
     descriptions = []
@@ -47,7 +47,7 @@ def match_microcauses(text: str, macro_code: str, top_k: int = 3):
     if not descriptions:
         return []
         
-    desc_embs = model.encode(descriptions)
+    desc_embs = model.encode(descriptions, show_progress_bar=False)
     
     similarities = cosine_similarity(text_emb, desc_embs)[0]
     

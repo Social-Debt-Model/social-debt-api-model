@@ -96,9 +96,9 @@ def classify_specific_causes_topk(
     for c in candidates:
         candidate_texts.append(build_candidate_cause_text(c))
 
-    macro_embedding = model.encode(macro_semantic_text, convert_to_tensor=True)
-    comment_embedding = model.encode(comment_semantic_text, convert_to_tensor=True)
-    candidate_embeddings = model.encode(candidate_texts, convert_to_tensor=True)
+    macro_embedding = model.encode(macro_semantic_text, convert_to_tensor=True, show_progress_bar=False)
+    comment_embedding = model.encode(comment_semantic_text, convert_to_tensor=True, show_progress_bar=False)
+    candidate_embeddings = model.encode(candidate_texts, convert_to_tensor=True, show_progress_bar=False)
 
     scores_macro = util.cos_sim(macro_embedding, candidate_embeddings)[0]
     scores_comment = util.cos_sim(comment_embedding, candidate_embeddings)[0]
