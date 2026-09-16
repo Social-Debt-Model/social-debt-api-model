@@ -1,17 +1,20 @@
+import os
+# Apagar globalmente las barras de progreso (tqdm) de librerias como SBERT/HuggingFace
+os.environ["TQDM_DISABLE"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 from fastapi import APIRouter, File, UploadFile, HTTPException, BackgroundTasks, Form
 from typing import List, Dict, Any
 import pandas as pd
 import io
 import uuid
 import json
-import os
 import random
 import string
 import asyncio
 import time
 import logging
 from datetime import datetime
-import base64
 
 from app.domain.schemas import ClassificationRequest, ClassificationResponse
 from pydantic import BaseModel
@@ -26,8 +29,8 @@ from app.infrastructure.llm_client import client
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
+    format="%(asctime)s - %(message)s",
+    datefmt="%H:%M:%S"
 )
 logger = logging.getLogger(__name__)
 
@@ -131,7 +134,7 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
         try:
             initial_status = get_job_status(job_id)
             if initial_status and initial_status.get("status") == "cancelled":
-                logger.info(f"[JOB {job_id}] Cancelado antes de iniciar.")
+                logger.info(f"JOB {job_id} cancelado antes de iniciar.")
                 return
                 
             results = []
@@ -139,7 +142,7 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
             total = len(df)
             processed = 0
             
-            logger.info(f"[JOB {job_id}] Procesando lote ({total} filas).")
+            logger.info(f"JOB {job_id} iniciado.")
             
             active_job_state["job_id"] = job_id
             active_job_state["total_comments"] = total
@@ -159,7 +162,7 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
             for i in range(0, total, chunk_size):
                 current_status = get_job_status(job_id)
                 if current_status and current_status.get("status") == "cancelled":
-                    logger.info(f"[JOB {job_id}] Cancelado por el usuario en ejecucion.")
+                    logger.info(f"JOB {job_id} cancelado por el usuario.")
                     active_job_state["job_id"] = None
                     return
                     
@@ -217,7 +220,7 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                 
                 post_chunk_status = get_job_status(job_id)
                 if post_chunk_status and post_chunk_status.get("status") == "cancelled":
-                    logger.info(f"[JOB {job_id}] Cancelado por el usuario en ejecucion.")
+                    logger.info(f"JOB {job_id} cancelado por el usuario.")
                     active_job_state["job_id"] = None
                     return
                 
@@ -230,10 +233,14 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     "progress": f"{processed} de {total} comentarios procesados ({percent}%)",
                     "processed": processed
                 })
+                
+                # Log minimalista del chunk
+                chunk_num = (i // chunk_size) + 1
+                logger.info(f"JOB {job_id} chunk {chunk_num} ({processed}/{total})")
                     
             final_status = get_job_status(job_id)
             if final_status and final_status.get("status") == "cancelled":
-                logger.info(f"[JOB {job_id}] Cancelado por el usuario en ejecucion.")
+                logger.info(f"JOB {job_id} cancelado por el usuario.")
                 active_job_state["job_id"] = None
                 return
 
@@ -250,11 +257,11 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                 "result": response_data
             })
             
-            logger.info(f"[JOB {job_id}] Completado exitosamente.")
+            logger.info(f"JOB {job_id} finalizado.")
             active_job_state["job_id"] = None
             
         except Exception as e:
-            logger.error(f"[JOB {job_id}] Fallo durante el procesamiento: {str(e)}", exc_info=True)
+            logger.error(f"JOB {job_id} fallo: {str(e)}")
             active_job_state["job_id"] = None
             update_job_status(job_id, {
                 "status": "failed",
@@ -264,7 +271,7 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
 @router.post("/classify/text", response_model=dict)
 async def classify_text(request: ClassificationRequest):
     result = await process_single_comment(request.text)
-    logger.info("Clasificacion individual procesada.")
+    logger.info(f"Comentario suelto clasificado: Causa {result.get('macro_cause_code')}")
     return result
 
 @router.post("/classify/batch")
@@ -297,7 +304,7 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
         
     limits_response = await check_openai_limits()
     if limits_response.get("status") == "rate_limit_exceeded":
-        raise HTTPException(status_code=429, detail="Cuota de OpenAI agotada o limite excedido. Intenta mas tarde.")
+        raise HTTPException(status_code=429, detail="Cuota de OpenAI agotada.")
         
     limits = limits_response.get("limits", {})
     rem_req_str = limits.get("remaining_requests", "0")
@@ -335,8 +342,8 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
                 elif orphan_decision == "discard":
                     df = df.dropna(subset=[issue_col])
                     df = df[df[issue_col].astype(str).str.strip() != ""]
-        except Exception as e:
-            logger.error(f"Error parsing instructions JSON: {e}")
+        except Exception:
+            pass
             
     if not id_col or id_col not in df.columns:
         df["comment_id"] = [f"auto-id-{i+1}" for i in range(len(df))]
@@ -347,8 +354,6 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
         df["comment_id"] = df[id_col]
 
     job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
-    
-    logger.info(f"[JOB {job_id}] Lote registrado: {file.filename}")
     
     update_job_status(job_id, {
         "job_id": job_id,
@@ -435,7 +440,6 @@ async def check_openai_limits():
                 "error_message": str(e)
             }
         
-        logger.error(f"Fallo critico al verificar limites de OpenAI: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch OpenAI limits: {str(e)}")
 
 class CancelRequest(BaseModel):
