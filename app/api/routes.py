@@ -9,6 +9,7 @@ import random
 import string
 import asyncio
 import time
+import logging
 from datetime import datetime
 import base64
 
@@ -23,24 +24,25 @@ from app.infrastructure.ontology_client import enrich_microcause
 from app.use_cases.metrics.social_debt_index import calculate_batch_sdi
 from app.infrastructure.llm_client import client
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 JOBS_DIR = "app/jobs"
 os.makedirs(JOBS_DIR, exist_ok=True)
 
-# Bloqueo global para evitar la ejecución concurrente de múltiples archivos por lotes
 batch_lock = asyncio.Lock()
 
-# La generación de Excels ha sido delegada al Frontend (Client-Side)
-# para reducir carga del servidor y ancho de banda.
-
-
-# Estado global del trabajo activo para calcular estimaciones a los trabajos en cola
 active_job_state = {
     "job_id": None,
     "total_comments": 0,
     "processed_comments": 0,
-    "avg_time_per_comment": 0.30 # Valor inicial conservador (300ms)
+    "avg_time_per_comment": 0.30
 }
 
 def get_job_file_path(job_id: str) -> str:
@@ -48,7 +50,6 @@ def get_job_file_path(job_id: str) -> str:
 
 def update_job_status(job_id: str, data: dict):
     path = get_job_file_path(job_id)
-    # Merging with existing data if exists
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             current_data = json.load(f)
@@ -68,10 +69,6 @@ def get_job_status(job_id: str) -> dict:
         return json.load(f)
 
 async def process_single_comment(text: str, author: str = "") -> dict:
-    # Tweak: Ajuste para igualar comportamiento del Colab (Solicitado por el cliente):
-    # En el notebook original (Notebook_limpieza_28_07.ipynb, línea 3584), el cliente 
-    # uso un Series.apply(clean_comment_text) el cual omite pasar el parametro 'author'.
-    # Como resultado, los bots no se detectan por author. Se fuerza author="" para mantener la igualdad 1:1.
     cleaned_text = clean_comment_text(text, "")
     is_hard = es_hard_noise(cleaned_text)
     is_oper = es_operational_noise(cleaned_text)
@@ -89,8 +86,6 @@ async def process_single_comment(text: str, author: str = "") -> dict:
         final_code, final_conf, rule_applied = apply_priority_rules(cleaned_text, llm_code, llm_conf)
         
         if final_code != "H":
-            # Map code back to label for the semantic matcher (it expects labels, wait, I can modify it or pass code)
-            # The client notebook mapped A->Communication etc. Let's assume classify_specific_causes_topk accepts it.
             macro_label = final_code
             if final_code == "A": macro_label = "Communication and shared understanding breakdowns"
             elif final_code == "B": macro_label = "Coordination and workflow misalignment"
@@ -132,11 +127,15 @@ async def process_single_comment(text: str, author: str = "") -> dict:
 async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str, issue_col: str, author_col: str = None):
     global active_job_state
     
-    # Usar el bloqueo global para asegurar que solo 1 archivo se procese a la vez
+    logger.info(f"[JOB {job_id}] Ingresando a la cola de procesamiento asincrono.")
+    
     async with batch_lock:
         try:
+            logger.info(f"[JOB {job_id}] Inicio de procesamiento exclusivo (Lock adquirido).")
+            
             initial_status = get_job_status(job_id)
             if initial_status and initial_status.get("status") == "cancelled":
+                logger.info(f"[JOB {job_id}] Detectado como cancelado antes de iniciar. Abortando.")
                 return
                 
             results = []
@@ -144,7 +143,6 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
             total = len(df)
             processed = 0
             
-            # Registrar como el trabajo activo actual
             active_job_state["job_id"] = job_id
             active_job_state["total_comments"] = total
             active_job_state["processed_comments"] = 0
@@ -157,14 +155,13 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                 "processed": 0
             })
             
-            # Procesar en lotes (chunks) conservadores de 10 para respetar el Tier 1 (Rate Limits)
             chunk_size = 50
             rows = list(df.iterrows())
             
             for i in range(0, total, chunk_size):
-                # Check cancellation at each chunk
                 current_status = get_job_status(job_id)
                 if current_status and current_status.get("status") == "cancelled":
+                    logger.info(f"[JOB {job_id}] Cancelacion detectada en el chunk {i}. Interrumpiendo ciclo.")
                     active_job_state["job_id"] = None
                     return
                     
@@ -175,7 +172,6 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     text = str(row[text_col])
                     author = str(row[author_col]) if author_col and not pd.isna(row.get(author_col)) else ""
                     if pd.isna(row[text_col]) or not text.strip():
-                        # Para simplificar el gather, enviamos una tarea dummy que retorna un dict vacío o manejamos después
                         async def dummy_task(r, t, a):
                             return r, t, a, None
                         tasks.append(dummy_task(row, text, author))
@@ -221,7 +217,12 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     
                 percent = int((processed / total) * 100)
                 
-                # Actualizar estado global para que los que están en cola calculen el tiempo
+                post_chunk_status = get_job_status(job_id)
+                if post_chunk_status and post_chunk_status.get("status") == "cancelled":
+                    logger.info(f"[JOB {job_id}] Cancelacion detectada despues de procesar el chunk {i}. Abortando.")
+                    active_job_state["job_id"] = None
+                    return
+                
                 active_job_state["processed_comments"] = processed
                 elapsed = time.time() - start_time
                 if processed > 0:
@@ -232,13 +233,19 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     "processed": processed
                 })
                 
-                # NOTA: El limitador de tokens dinámico ya gestiona el ritmo 
-                # directamente en la capa de red (llm_client.py) antes de llamar a OpenAI.
+                logger.info(f"[JOB {job_id}] Progreso: {processed}/{total} ({percent}%)")
                     
+            final_status = get_job_status(job_id)
+            if final_status and final_status.get("status") == "cancelled":
+                logger.info(f"[JOB {job_id}] Cancelacion detectada justo antes de finalizar el reporte. Abortando.")
+                active_job_state["job_id"] = None
+                return
+
             response_data = {"comments": results}
             
             sdi_results = {}
             if issue_col:
+                logger.info(f"[JOB {job_id}] Calculando metricas SDI finales.")
                 sdi_results = calculate_batch_sdi(issues_data)
                 response_data["issues_metrics"] = sdi_results
                 
@@ -248,9 +255,11 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                 "result": response_data
             })
             
+            logger.info(f"[JOB {job_id}] Tarea completada con exito.")
             active_job_state["job_id"] = None
             
         except Exception as e:
+            logger.error(f"[JOB {job_id}] Fallo durante el procesamiento: {str(e)}", exc_info=True)
             active_job_state["job_id"] = None
             update_job_status(job_id, {
                 "status": "failed",
@@ -259,17 +268,15 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
 
 @router.post("/classify/text", response_model=dict)
 async def classify_text(request: ClassificationRequest):
-    """
-    Clasifica un único comentario de texto de forma síncrona.
-    """
+    logger.info(f"Peticion de clasificacion individual recibida. Texto (snippet): '{request.text[:40]}...'")
     result = await process_single_comment(request.text)
+    logger.info(f"Clasificacion individual finalizada: Causa {result.get('macro_cause_code')}, Ruido: {result.get('is_noise')}")
     return result
 
 @router.post("/classify/batch")
 async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = File(...), instructions: str = Form(None)):
-    """
-    Sube un archivo CSV o Excel. Retorna un job_id casi instantáneamente.
-    """
+    logger.info(f"Peticion de clasificacion por lotes recibida. Archivo: {file.filename}")
+    
     file_bytes = await file.read()
     if file.filename.endswith('.csv'):
         try:
@@ -281,9 +288,9 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
     elif file.filename.endswith('.xlsx') or file.filename.endswith('.xls'):
         df = pd.read_excel(io.BytesIO(file_bytes))
     else:
+        logger.warning(f"Archivo rechazado (Formato invalido): {file.filename}")
         raise HTTPException(status_code=400, detail="Only CSV or Excel files are supported")
         
-    # Buscar la columna de texto (coincidencia parcial, evitando ids y metadatos)
     text_keywords = ['body', 'text', 'content', 'description', 'comment']
     text_col = None
     for col in df.columns:
@@ -295,12 +302,13 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
             break
             
     if not text_col:
+        logger.warning(f"Archivo rechazado (No se encontro columna de texto): {file.filename}")
         raise HTTPException(status_code=400, detail="Could not find a text column")
         
-    # Verificar límites de OpenAI antes de aceptar el archivo
     limits_response = await check_openai_limits()
     if limits_response.get("status") == "rate_limit_exceeded":
-        raise HTTPException(status_code=429, detail="Cuota de OpenAI agotada o límite excedido. Intenta más tarde.")
+        logger.warning("Peticion de lote rechazada: Cuota de OpenAI agotada.")
+        raise HTTPException(status_code=429, detail="Cuota de OpenAI agotada o limite excedido. Intenta mas tarde.")
         
     limits = limits_response.get("limits", {})
     rem_req_str = limits.get("remaining_requests", "0")
@@ -310,16 +318,15 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
         rem_req = 0
         
     if len(df) > rem_req:
+        logger.warning(f"Archivo rechazado: Contiene {len(df)} comentarios pero el limite actual es {rem_req}.")
         raise HTTPException(
             status_code=400, 
-            detail=f"El archivo tiene {len(df)} comentarios, pero tu cuota actual de OpenAI solo permite {rem_req} peticiones más en este momento."
+            detail=f"El archivo tiene {len(df)} comentarios, pero tu cuota actual de OpenAI solo permite {rem_req} peticiones."
         )
         
-    # Buscar la columna del issue (coincidencia parcial)
     issue_keywords = ['issue_number', 'issue', 'ticket', 'issue_id']
     issue_col = next((col for col in df.columns if any(kw in col.lower() for kw in issue_keywords)), None)
     
-    # Buscar la columna del autor (coincidencia parcial)
     author_keywords = ['author', 'user', 'login', 'creator']
     author_col = next((col for col in df.columns if any(kw in col.lower() for kw in author_keywords)), None)
     
@@ -341,19 +348,19 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
                     df = df.dropna(subset=[issue_col])
                     df = df[df[issue_col].astype(str).str.strip() != ""]
         except Exception as e:
-            print("Error parsing instructions:", e)
+            logger.error(f"Error parsing instructions JSON: {e}")
             
     if not id_col or id_col not in df.columns:
         df["comment_id"] = [f"auto-id-{i+1}" for i in range(len(df))]
     else:
         mask = df[id_col].isna() | (df[id_col].astype(str).str.strip() == "")
         if mask.any():
-            # Create a copy to avoid SettingWithCopyWarning if any, but loc is fine
             df.loc[mask, id_col] = [f"auto-id-{i+1}" for i in range(mask.sum())]
-        df["comment_id"] = df[id_col] # Map it so background_batch_process finds it easily
+        df["comment_id"] = df[id_col]
 
-    # Generar un ID corto, humano y amigable (ej: "A8K9M2")
     job_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    
+    logger.info(f"[JOB {job_id}] Trabajo registrado exitosamente. Filas: {len(df)}. Mapeo - Text: '{text_col}', Issue: '{issue_col}'")
     
     update_job_status(job_id, {
         "job_id": job_id,
@@ -367,19 +374,15 @@ async def classify_batch(background_tasks: BackgroundTasks, file: UploadFile = F
     return {
         "job_id": job_id,
         "status": "pending",
-        "message": "Tu archivo se está procesando. Consulta el estado con el job_id en el endpoint GET /classify/batch/{job_id}."
+        "message": "Tu archivo se esta procesando. Consulta el estado con el job_id en el endpoint GET /classify/batch/{job_id}."
     }
 
 @router.get("/classify/batch/{job_id}")
 async def get_batch_status(job_id: str):
-    """
-    Consulta el estado y progreso de un procesamiento por lotes usando el job_id.
-    """
     job_data = get_job_status(job_id)
     if not job_data:
         raise HTTPException(status_code=404, detail="Job not found")
         
-    # Si este trabajo está en cola, calcular cuánto le falta al trabajo activo actual
     if job_data.get("status") == "pending" and active_job_state["job_id"] is not None:
         remaining_comments = active_job_state["total_comments"] - active_job_state["processed_comments"]
         if remaining_comments > 0:
@@ -392,7 +395,6 @@ async def get_batch_status(job_id: str):
             
             job_data["progress"] = f"En cola de espera... (Tiempo estimado para iniciar: {wait_time_str})"
             
-    # Añadir estimación de tiempo restante si el trabajo está en procesamiento
     elif job_data.get("status") == "processing" and job_data.get("job_id", job_id) == active_job_state["job_id"]:
         remaining_comments = active_job_state["total_comments"] - active_job_state["processed_comments"]
         if remaining_comments > 0:
@@ -407,12 +409,7 @@ async def get_batch_status(job_id: str):
 
 @router.get("/system/openai-limits")
 async def check_openai_limits():
-    """
-    Realiza un ping a OpenAI para leer los headers de respuesta y 
-    determinar la cuota exacta (Requests y Tokens) disponibles en tiempo real.
-    """
     try:
-        # Hacemos una petición mínima de 1 token para que devuelva los headers
         response = await client.chat.completions.with_raw_response.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": "ping"}],
@@ -434,7 +431,6 @@ async def check_openai_limits():
             "message": "Limits fetched successfully."
         }
     except Exception as e:
-        # Si ya llegamos al límite, OpenAI arrojará un error 429, pero igual podemos leer los headers del error
         if hasattr(e, 'response') and e.response is not None:
             headers = e.response.headers
             return {
@@ -451,6 +447,7 @@ async def check_openai_limits():
                 "error_message": str(e)
             }
         
+        logger.error(f"Fallo critico al verificar limites de OpenAI: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch OpenAI limits: {str(e)}")
 
 class CancelRequest(BaseModel):
@@ -458,21 +455,22 @@ class CancelRequest(BaseModel):
 
 @router.post("/classify/batch/cancel")
 async def cancel_batch(req: CancelRequest):
-    """
-    Cancela un trabajo por lotes en progreso o en cola.
-    """
+    logger.info(f"Peticion de cancelacion recibida para el trabajo: {req.job_id}")
     status_data = get_job_status(req.job_id)
     if not status_data:
+        logger.warning(f"Intento de cancelacion fallido. El trabajo {req.job_id} no existe.")
         raise HTTPException(status_code=404, detail="Job not found")
         
     current = status_data.get("status")
     if current in ["completed", "failed", "cancelled"]:
+        logger.info(f"El trabajo {req.job_id} ya se encontraba en estado terminal: {current}.")
         return {"message": f"Job is already {current}"}
         
     update_job_status(req.job_id, {"status": "cancelled"})
+    logger.info(f"El estado del trabajo {req.job_id} fue forzado a 'cancelled'.")
     
-    # Si este era el trabajo activo, limpiamos el estado global
     if active_job_state["job_id"] == req.job_id:
         active_job_state["job_id"] = None
+        logger.info(f"El trabajo {req.job_id} fue removido del active_job_state global.")
         
     return {"message": "Job cancelled successfully"}
