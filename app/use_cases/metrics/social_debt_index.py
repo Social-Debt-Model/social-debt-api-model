@@ -30,16 +30,36 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
 
             smells = []
             risks = []
+            prevs = []
+            effs = []
+            corrs = []
+            inds = []
             for m in c.get("microcauses", []):
                 for s in m.get("community_smells", []):
                     smells.extend([x.strip() for x in str(s).split('|') if x.strip()])
                 for r in m.get("risks", []):
                     risks.extend([x.strip() for x in str(r).split('|') if x.strip()])
+                for p in m.get("preventive_strategies", []):
+                    prevs.extend([x.strip() for x in str(p).split('|') if x.strip()])
+                for e in m.get("effects", []):
+                    effs.extend([x.strip() for x in str(e).split('|') if x.strip()])
+                for cs in m.get("corrective_strategies", []):
+                    corrs.extend([x.strip() for x in str(cs).split('|') if x.strip()])
+                for ind in m.get("indicators", []):
+                    inds.extend([x.strip() for x in str(ind).split('|') if x.strip()])
                 
             smell_repr = str(sorted(list(set(smells)))) if smells else "[]"
             risk_repr = str(sorted(list(set(risks)))) if risks else "[]"
+            prev_repr = str(sorted(list(set(prevs)))) if prevs else "[]"
+            eff_repr = str(sorted(list(set(effs)))) if effs else "[]"
+            corr_repr = str(sorted(list(set(corrs)))) if corrs else "[]"
+            ind_repr = str(sorted(list(set(inds)))) if inds else "[]"
 
             rows.append({
+                "preventive_strategies_repr": prev_repr,
+                "effects_repr": eff_repr,
+                "corrective_strategies_repr": corr_repr,
+                "indicators_repr": ind_repr,
                 "issue_number": issue_id,
                 "final_cause_for_analysis": c.get("code", "H"),
                 "top_microcause_names_list": micro_names,
@@ -62,6 +82,11 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
         risk_counter = Counter()
         macro_counter = Counter()
 
+        prev_counter = Counter()
+        eff_counter = Counter()
+        corr_counter = Counter()
+        ind_counter = Counter()
+
         for _, row in group.iterrows():
             cause = row["final_cause_for_analysis"]
             if cause != "H":
@@ -78,6 +103,16 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
                 smell_counter[row["community_smells_repr"]] += 1
             if row["risks_repr"] != "[]":
                 risk_counter[row["risks_repr"]] += 1
+                
+            # Aggregate the new fields
+            if "preventive_strategies_repr" in row and row["preventive_strategies_repr"] != "[]":
+                prev_counter[row["preventive_strategies_repr"]] += 1
+            if "effects_repr" in row and row["effects_repr"] != "[]":
+                eff_counter[row["effects_repr"]] += 1
+            if "corrective_strategies_repr" in row and row["corrective_strategies_repr"] != "[]":
+                corr_counter[row["corrective_strategies_repr"]] += 1
+            if "indicators_repr" in row and row["indicators_repr"] != "[]":
+                ind_counter[row["indicators_repr"]] += 1
 
         return pd.Series({
             "clean_comment_count": len(group),
@@ -86,6 +121,10 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             "dominant_microcause_types": type_counter.most_common(5),
             "dominant_community_smells": smell_counter.most_common(5),
             "dominant_risks": risk_counter.most_common(5),
+            "dominant_preventive_strategies": prev_counter.most_common(5),
+            "dominant_effects": eff_counter.most_common(5),
+            "dominant_corrective_strategies": corr_counter.most_common(5),
+            "dominant_indicators": ind_counter.most_common(5),
             "issue_text": "\n\n".join(group["comment_body_clean_final"].astype(str))
         })
 
@@ -166,6 +205,10 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             "dominant_microcauses": row.get("dominant_microcauses", []),
             "dominant_microcause_types": row.get("dominant_microcause_types", []),
             "dominant_community_smells": row.get("dominant_community_smells", []),
-            "dominant_risks": row.get("dominant_risks", [])
+            "dominant_risks": row.get("dominant_risks", []),
+            "dominant_preventive_strategies": row.get("dominant_preventive_strategies", []),
+            "dominant_effects": row.get("dominant_effects", []),
+            "dominant_corrective_strategies": row.get("dominant_corrective_strategies", []),
+            "dominant_indicators": row.get("dominant_indicators", [])
         }
     return results
