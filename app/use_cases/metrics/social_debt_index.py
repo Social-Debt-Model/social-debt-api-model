@@ -34,6 +34,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             effs = []
             corrs = []
             inds = []
+            mets = []
             for m in c.get("microcauses", []):
                 for s in m.get("community_smells", []):
                     smells.extend([x.strip() for x in str(s).split('|') if x.strip()])
@@ -47,6 +48,8 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
                     corrs.extend([x.strip() for x in str(cs).split('|') if x.strip()])
                 for ind in m.get("indicators", []):
                     inds.extend([x.strip() for x in str(ind).split('|') if x.strip()])
+                for met in m.get("metrics", []):
+                    mets.extend([x.strip() for x in str(met).split('|') if x.strip()])
                 
             smell_repr = str(sorted(list(set(smells)))) if smells else "[]"
             risk_repr = str(sorted(list(set(risks)))) if risks else "[]"
@@ -54,12 +57,14 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             eff_repr = str(sorted(list(set(effs)))) if effs else "[]"
             corr_repr = str(sorted(list(set(corrs)))) if corrs else "[]"
             ind_repr = str(sorted(list(set(inds)))) if inds else "[]"
+            met_repr = str(sorted(list(set(mets)))) if mets else "[]"
 
             rows.append({
                 "preventive_strategies_repr": prev_repr,
                 "effects_repr": eff_repr,
                 "corrective_strategies_repr": corr_repr,
                 "indicators_repr": ind_repr,
+                "metrics_repr": met_repr,
                 "issue_number": issue_id,
                 "final_cause_for_analysis": c.get("code", "H"),
                 "top_microcause_names_list": micro_names,
@@ -86,6 +91,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
         eff_counter = Counter()
         corr_counter = Counter()
         ind_counter = Counter()
+        met_counter = Counter()
 
         for _, row in group.iterrows():
             cause = row["final_cause_for_analysis"]
@@ -113,6 +119,8 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
                 corr_counter[row["corrective_strategies_repr"]] += 1
             if "indicators_repr" in row and row["indicators_repr"] != "[]":
                 ind_counter[row["indicators_repr"]] += 1
+            if "metrics_repr" in row and row["metrics_repr"] != "[]":
+                met_counter[row["metrics_repr"]] += 1
 
         return pd.Series({
             "clean_comment_count": len(group),
@@ -125,6 +133,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             "dominant_effects": eff_counter.most_common(5),
             "dominant_corrective_strategies": corr_counter.most_common(5),
             "dominant_indicators": ind_counter.most_common(5),
+            "dominant_metrics": met_counter.most_common(5),
             "issue_text": "\n\n".join(group["comment_body_clean_final"].astype(str))
         })
 
@@ -209,6 +218,7 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             "dominant_preventive_strategies": row.get("dominant_preventive_strategies", []),
             "dominant_effects": row.get("dominant_effects", []),
             "dominant_corrective_strategies": row.get("dominant_corrective_strategies", []),
-            "dominant_indicators": row.get("dominant_indicators", [])
+            "dominant_indicators": row.get("dominant_indicators", []),
+            "dominant_metrics": row.get("dominant_metrics", [])
         }
     return results
