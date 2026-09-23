@@ -1,51 +1,55 @@
 # Social Debt API Model
 
-API web diseñada para identificar y clasificar "Deuda Social" (Social Debt) en comunicaciones de ingeniería de software (ej. comentarios de GitHub), utilizando Procesamiento de Lenguaje Natural (NLP), Modelos de Lenguaje Grandes (LLM), y Emparejamiento Semántico.
+API robusta y escalable diseñada para detectar, clasificar y medir la **Deuda Social** en repositorios de software a través de comentarios y discusiones. Utiliza técnicas avanzadas de Procesamiento de Lenguaje Natural (NLP), LLMs (OpenAI GPT-4o-mini) y emparejamiento semántico local (Sentence-Transformers).
 
-El modelo matemático detrás de esta API ha sido extraído y replicado exactamente a partir de los cuadernos de investigación (Jupyter Notebooks) originales del cliente, logrando una **similitud matemática del 99.2%**.
+## 🧠 Arquitectura y Funcionamiento
 
----
+El modelo opera en un pipeline de múltiples etapas para procesar el texto:
 
-## 🏗 Arquitectura Híbrida
+1. **Limpieza de Ruido Operacional:** Utiliza heurísticas y expresiones regulares para limpiar bloques de código, URLs, menciones y firmas, aislando el texto puramente conversacional.
+2. **Filtro de Ruido (Clasificación Causa H):** Determina si un comentario es ruido/conversación normal ("Causa H") o si contiene indicios de Deuda Social. Se apoya fuertemente en el LLM configurado con un prompt experto.
+3. **Identificación de Macrocausas y Microcausas:** El texto que contiene Deuda Social se clasifica en una de las 7 Macrocausas principales (A-G). Posteriormente, utilizando un modelo NLP local (`all-MiniLM-L6-v2`), busca en un espacio vectorial las Microcausas más afines a nivel semántico.
+4. **Integración Semántica:** Combina y enlaza las Microcausas con sus respectivos _Community Smells_, Riesgos, Estrategias Correctivas, Estrategias Preventivas, Indicadores y Métricas asociadas según una extensa Ontología precargada.
+5. **Cálculo del Índice de Deuda Social (SDI):** Agrupa los resultados por Issue y calcula métricas de frecuencia, diversidad de causas, y un puntaje numérico unificado que representa el nivel de Deuda Social (Bajo, Medio, Alto) del Issue.
 
-Para garantizar el mejor rendimiento, los menores costos y un determinismo preciso, la API utiliza una arquitectura híbrida probada:
+## 🚀 Despliegue y Requisitos
 
-1. **Limpieza de Ruido (RegEx):** Se detectan bots, tickets automáticos y ruido operativo usando las expresiones regulares exactas de la investigación original.
-2. **Razonamiento Complejo (OpenAI LLM):** El modelo `gpt-4o-mini` de OpenAI se utiliza **única y exclusivamente** para analizar el contexto del texto limpio y clasificarlo en una de las 8 Macrocausas (Letras A a H).
-3. **Emparejamiento Semántico Local (Sentence-Transformers):** En lugar de hacer costosas peticiones web para buscar causas específicas, la API cuenta con el modelo NLP local `all-MiniLM-L6-v2` integrado. Este modelo convierte el texto a vectores y busca las 5 Microcausas más cercanas matemáticamente en tiempo récord basándose en una ontología predefinida.
-4. **Índice de Deuda Social (SDI):** Un módulo matemático propio agrupa los comentarios y calcula métricas normalizadas de diversidad y puntajes de SDI agrupados por Issue.
+### Requisitos del Sistema
+- Python 3.10+
+- **2GB de RAM Mínimo** (Estrictamente necesario para montar el modelo PyTorch Sentence-Transformers local en memoria).
+- Entorno de producción sugerido: Docker / VPS / Coolify.
 
----
-
-## 🚀 Guía de Consumo para el Frontend
-
-Esta sección detalla cómo integrar y consumir la API desde cualquier aplicación Frontend.
-
-### Seguridad y Autenticación
-
-Todos los endpoints están asegurados. Tu aplicación Frontend debe enviar obligatoriamente el Header HTTP `X-API-Key` en **todas** las peticiones.
-
-```http
-X-API-Key: <TU_API_SECRET_KEY>
+### Variables de Entorno (`.env`)
+Debes crear un archivo `.env` en la raíz del proyecto (basado en `.env.example`):
+```env
+OPENAI_API_KEY=sk-...
+API_SECRET_KEY=tu_contraseña_secreta_aqui
 ```
+> **Nota de Seguridad:** El `API_SECRET_KEY` actúa como autenticación maestra para todos los endpoints.
 
-### Optimización de Ancho de Banda (Diccionario Frontend)
-
-Para reducir el tamaño de las respuestas JSON y ahorrar ancho de banda, la API **no devuelve los textos largos de las descripciones de ontología**.
-En su lugar, la API devuelve códigos cortos (Ej. Macrocausa `"A"`, Microcausa `"COG-011_SystemConfigurationConstraints"`).
-El Frontend debe cargar el archivo estático ubicado en `data/frontend_ontology_dictionary.json` para mapear estos códigos a sus títulos descriptivos legibles por el usuario en la interfaz.
+### Ejecución Local
+1. Crea un entorno virtual e instala dependencias:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+2. Inicia el servidor:
+   ```bash
+   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
 
 ---
 
-### Endpoints Principales
+## 📖 Documentación de la API (Endpoints)
 
-#### 1. Validar Límites de OpenAI
+> **⚠️ Importante:** Todos los endpoints requieren el header `X-API-Key`.
 
+### 1. Validar Límites de OpenAI
 `GET /system/openai-limits`
-Realiza un "ping" a la red de OpenAI y extrae la cuota exacta de peticiones disponibles. **Llamar siempre antes de enviar lotes masivos para evitar errores 429.**
+Realiza un ping a OpenAI para revisar la cuota disponible. Ideal antes de enviar lotes grandes para prevenir errores HTTP 429.
 
-- **Respuesta Exitosa:**
-
+**Respuesta Exitosa:**
 ```json
 {
   "status": "success",
@@ -56,20 +60,18 @@ Realiza un "ping" a la red de OpenAI y extrae la cuota exacta de peticiones disp
 }
 ```
 
-#### 2. Clasificación Síncrona (Un solo comentario)
-
+### 2. Clasificación Síncrona (Individual)
 `POST /classify/text`
+Analiza un único comentario y retorna el resultado en tiempo real.
 
-- **Body:**
-
+**Request Body:**
 ```json
 {
   "text": "This PR breaks the compilation on Windows machines because of the path separator."
 }
 ```
 
-- **Respuesta:**
-
+**Respuesta Exitosa:**
 ```json
 {
   "cleaned_text": "This PR breaks the compilation on Windows machines because of the path separator.",
@@ -88,28 +90,26 @@ Realiza un "ping" a la red de OpenAI y extrae la cuota exacta de peticiones disp
 }
 ```
 
-#### 3. Clasificación Asíncrona (Lotes Masivos)
-
+### 3. Procesamiento Asíncrono por Lotes (Batch)
 `POST /classify/batch`
-Sube un archivo `.csv` (Multipart/form-data). La API procesará los comentarios en segundo plano con alta concurrencia respetando los Rate Limits dinámicos.
+Sube un archivo `.csv` (Multipart) con miles de comentarios. El procesamiento se encola en segundo plano utilizando workers concurrentes que respetan automáticamente los límites de tasa dinámica (Rate Limits) de OpenAI.
 
-- **Form Data:** Key `file` con el archivo CSV adjunto.
-- **Respuesta:** Retorna casi instantáneamente un `job_id`.
+**Form Data:**
+- `file`: Archivo CSV. Debe contener mínimo la columna `body` (o `comment`). Opcionalmente `issue_number`, `comment_id`, `author`.
 
+**Respuesta:**
 ```json
 {
   "message": "Archivo aceptado. Procesamiento en segundo plano iniciado.",
-  "job_id": "A1B2C3"
+  "job_id": "uuid-del-trabajo"
 }
 ```
 
-#### 4. Polling de Resultados Masivos
-
+### 4. Consultar Estado de Trabajo Batch (Polling)
 `GET /classify/batch/{job_id}`
-El Frontend debe consultar este endpoint cada 2-3 segundos para actualizar la barra de progreso.
+Retorna el progreso actual o el resultado final del análisis de lote.
 
-- **Estado `processing`:**
-
+**Respuesta (Procesando):**
 ```json
 {
   "status": "processing",
@@ -117,119 +117,51 @@ El Frontend debe consultar este endpoint cada 2-3 segundos para actualizar la ba
 }
 ```
 
-- **Estado `completed`:**
-  Retorna el JSON completo con todos los comentarios analizados y las **Métricas SDI** por Issue (Solo si el CSV original incluía la columna `issue_number`).
-
+**Respuesta (Completado):**
+Cuando termina, retorna el análisis comentario por comentario, y si se proveyó el `issue_number`, también retorna el objeto `issues_metrics` con el SDI y las frecuencias dominantes calculadas por cada issue.
 ```json
 {
   "status": "completed",
   "progress": "100 de 100 comentarios procesados (100%)",
   "result": {
-    "comments": [
-      {
-        "issue_number": 136207,
-        "comment_id": 98453,
-        "author": "dev-juan",
-        "raw_text": "> This is a quote\nI agree.",
-        "cleaned_text": "I agree.",
-        "is_noise": false,
-        "noise_level": "operational_noise",
-        "macro_cause_code": "C",
-        "macro_cause_clean": "CongruenceCause",
-        "rule_applied": "The text shows misalignment...",
-        "confidence": 0.89,
-        "microcauses": [
-          {
-            "cause_name": "Technical complexity due to dependencies",
-            "similarity": 0.95,
-            "cause_type": ["CongruenceCause"],
-            "risks": ["RSK-013_TechnicalMaintenanceRisk"],
-            "community_smells": ["Socio-Technical Congruence Gap"],
-            "preventive_strategies": ["Define modular architecture"],
-            "corrective_strategies": ["Refactor monolith"],
-            "effects": ["Delayed feature release"],
-            "indicators": ["IND-005"],
-            "metrics": ["MTR-010"]
-          }
-        ]
-      }
-    ],
+    "comments": [ ... ],
     "issues_metrics": {
       "136207": {
         "social_debt_index": 0.645833,
         "social_debt_level": "Medium Social Debt",
-        "comment_count": 15,
-        "clean_comment_count": 11,
-        "macro_diversity": 3,
-        "micro_diversity": 5,
-        "smell_diversity": 5,
-        "risk_diversity": 5,
-        "top_macro_frequency": 9,
-        "top_micro_score": 4.4350675,
-        "top_smell_frequency": 18,
-        "top_risk_frequency": 9,
-        "dominant_macrocauses": [
-          ["C", 9],
-          ["A", 1]
-        ],
-        "dominant_microcauses": [
-          ["Technical complexity due to dependencies", 4.4350675]
-        ],
-        "dominant_microcause_types": [["CongruenceCause", 27]],
-        "dominant_community_smells": [["Socio-Technical Congruence Gap", 18]],
-        "dominant_risks": [["RSK-013_TechnicalMaintenanceRisk", 9]]
+        "dominant_community_smells": [
+           ["['Missing Link']", 17],
+           ["['Organizational Silo']", 5]
+        ]
       }
     }
   }
 }
 ```
+> **Nota de Arquitectura Frontend:** La API *no* genera archivos `.xlsx` ni exportaciones binarias. El sistema espera que el frontend consuma este JSON maestro y construya localmente las tablas o dashboards necesarios, optimizando los costos computacionales y el ancho de banda del servidor.
 
-> [!TIP]
-> **Generación de Excels (Frontend-Side)**
-> Para optimizar el uso de CPU y el ancho de banda, la API **ya no retorna archivos Excel en Base64**. El objeto JSON maestro (`comments` e `issues_metrics`) es la única fuente de verdad.
-> El Frontend debe utilizar este JSON, cruzarlo con su copia local de la ontología (`data/frontend_ontology_dictionary.json`), y usar una librería como `xlsx` (SheetJS) para iterar y construir los archivos `.xlsx` de los 5 pasos localmente en el navegador del cliente al momento de descargar.
-
-#### 5. Cancelar un Trabajo (Batch Cancel)
-
+### 5. Cancelar un Trabajo Batch
 `POST /classify/batch/cancel`
-Si enviaste un lote gigantesco por error y quieres abortarlo para no agotar tu cuota de OpenAI, puedes cancelarlo.
+Detiene instantáneamente un procesamiento en segundo plano.
 
-- **Body:**
-
+**Request Body:**
 ```json
 {
-  "job_id": "A1B2C3"
+  "job_id": "uuid-del-trabajo"
 }
 ```
 
-- **Respuesta Exitosa:**
-
-```json
-{
-  "message": "Job cancelled successfully"
-}
-```
-
-El trabajo cambiará su estado a `cancelled` y detendrá instantáneamente las llamadas a la API de OpenAI en segundo plano.
-
 ---
 
-## 🛠 Scripts Locales de Prueba
+## 📂 Estructura del Repositorio
 
-Dentro del directorio `scripts/` encontrarás valiosas herramientas interactivas de consola:
+El repositorio está organizado bajo los principios de **Clean Architecture**:
 
-- **`scripts/run_interactive_load_test.py`**: Script de pruebas de carga _End-to-End_. Permite seleccionar entre distintos tamaños de dataset (100, 1000, 2593 comentarios), elegir si golpear el servidor local o el VPS remoto, hace validaciones previas de límites de OpenAI, realiza el polling asíncrono y guarda el resultado automáticamente en un archivo `resultado_api_X.json` en la misma carpeta.
-- **`scripts/audit_openai_variance.py`**: Herramienta de auditoría forense que compara los resultados de esta API directamente contra la versión en crudo del código fuente original del cliente para garantizar la paridad matemática.
-- **`scripts/debug_single_comment.py`**: Script ultra rápido para probar el ciclo de vida síncrono de un único comentario de texto por consola.
-- **`scripts/run_metrics_benchmark.py`**: Valida exclusivamente la estabilidad del servidor midiendo consumo de RAM y CPU durante simulaciones de carga.
-
----
-
-## ⚙️ Requisitos y Despliegue
-
-- Python 3.10+
-- **2GB de RAM Mínimo** en el servidor (Requerido para montar el modelo PyTorch local en memoria).
-- Archivo `.env` en la raíz con:
-  - `OPENAI_API_KEY=sk-...`
-  - `API_SECRET_KEY=tu_contraseña_secreta_aqui`
-- Diseñado y optimizado para despliegue ininterrumpido en entornos como **Coolify / VPS / Docker**.
+- `app/api/`: Definición de Rutas de FastAPI.
+- `app/use_cases/`: Lógica de negocio (Pipeline de NLP, Clasificadores, Cálculo de SDI).
+- `app/infrastructure/`: Servicios externos (Cliente de OpenAI, Cliente Ontológico, Manejo de Jobs en memoria).
+- `app/domain/`: Modelos de datos de Pydantic.
+- `data/samples/`: Datasets CSV de prueba y archivos de ejemplo.
+- `scripts/`: Herramientas CLI para pruebas locales, auditorías, carga masiva interactiva y benchmarks de recursos.
+- `reports/`: Histórico de auditorías técnicas (Ej. Varianza de modelos estocásticos).
+- `Modelo_adaptativo_deuda_social_julio/`: Material base fundacional, proporcionado por el cliente, sobre el cual se basó la API.

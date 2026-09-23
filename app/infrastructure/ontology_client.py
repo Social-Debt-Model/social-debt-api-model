@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 import re
 from pathlib import Path
 from rdflib import Graph, RDF, OWL, Namespace
@@ -54,7 +58,7 @@ ontology_causes = []
 try:
     global_g, ontology_causes = load_ontology()
 except Exception as e:
-    print(f"Warning: Failed to load ontology: {e}")
+    logger.warning(f"Failed to load ontology: {e}")
 
 def local_name(node):
     return str(node).split("#")[-1]
