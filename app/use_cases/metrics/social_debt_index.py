@@ -124,16 +124,16 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
 
         return pd.Series({
             "clean_comment_count": len(group),
-            "dominant_macrocauses": macro_counter.most_common(5),
-            "dominant_microcauses": micro_counter.most_common(5),
-            "dominant_microcause_types": type_counter.most_common(5),
-            "dominant_community_smells": smell_counter.most_common(5),
-            "dominant_risks": risk_counter.most_common(5),
-            "dominant_preventive_strategies": prev_counter.most_common(5),
-            "dominant_effects": eff_counter.most_common(5),
-            "dominant_corrective_strategies": corr_counter.most_common(5),
-            "dominant_indicators": ind_counter.most_common(5),
-            "dominant_metrics": met_counter.most_common(5),
+            "dominant_macrocauses": macro_counter.most_common(1),
+            "dominant_microcauses": micro_counter.most_common(1),
+            "dominant_microcause_types": type_counter.most_common(1),
+            "dominant_community_smells": smell_counter.most_common(1),
+            "dominant_risks": risk_counter.most_common(1),
+            "dominant_preventive_strategies": prev_counter.most_common(1),
+            "dominant_effects": eff_counter.most_common(1),
+            "dominant_corrective_strategies": corr_counter.most_common(1),
+            "dominant_indicators": ind_counter.most_common(1),
+            "dominant_metrics": met_counter.most_common(1),
             "issue_text": "\n\n".join(group["comment_body_clean_final"].astype(str))
         })
 
