@@ -19,7 +19,7 @@ from datetime import datetime
 from app.domain.schemas import ClassificationRequest, ClassificationResponse
 from pydantic import BaseModel
 from app.use_cases.preprocessing.cleaning import clean_comment_text
-from app.use_cases.preprocessing.noise_filtering import es_hard_noise, es_operational_noise
+from app.use_cases.preprocessing.noise_filtering import es_hard_noise, es_soft_noise
 from app.use_cases.classification.priority_rules import apply_priority_rules
 from app.use_cases.classification.llm_classifier import predict_macro_cause
 from app.use_cases.semantic.ontology_matcher import classify_specific_causes_topk
@@ -74,9 +74,9 @@ def get_job_status(job_id: str) -> dict:
 async def process_single_comment(text: str, author: str = "") -> dict:
     cleaned_text = clean_comment_text(text, "")
     is_hard = es_hard_noise(cleaned_text)
-    is_oper = es_operational_noise(cleaned_text)
-    is_noise = is_hard or is_oper
-    noise_level = "hard_noise" if is_hard else "operational_noise" if is_oper else "useful"
+    is_soft = es_soft_noise(cleaned_text)
+    is_noise = is_hard or is_soft
+    noise_level = "hard_noise" if is_hard else "soft_noise" if is_soft else "useful"
     
     final_code = "H"
     macro_label = "No identificable"

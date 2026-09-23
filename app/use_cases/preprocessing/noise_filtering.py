@@ -56,8 +56,7 @@ def es_hard_noise(texto):
             return True
     return False
 
-def es_operational_noise(texto):
-    # En la API lo llamamos operational_noise en lugar de soft_noise
+def es_soft_noise(texto):
     texto = str(texto).strip().lower()
     for patron in SOFT_NOISE_PATTERNS:
         if re.search(patron, texto):
