@@ -3,7 +3,7 @@ from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
 
 def count_items(x):
-    if isinstance(x, list): return len(x)
+    if isinstance(x, list): return min(len(x), 5)
     return 0
 
 def top_frequency(x):
