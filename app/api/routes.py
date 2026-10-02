@@ -199,7 +199,6 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                         "issue_number": iss_val,
                         "comment_id": id_val,
                         "raw_text": t,
-                        "author": a
                     }
 
                     row_dict.update(res)
