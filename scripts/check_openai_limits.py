@@ -1,3 +1,13 @@
+﻿"""
+Verificador de Límites y Cuota de API OpenAI.
+
+Realiza una consulta mínima al endpoint de inferencia de OpenAI para inspeccionar
+las cabeceras HTTP de límites de tasa (RPM y TPM) asignadas a la API key configurada.
+
+Uso:
+    python scripts/check_openai_limits.py
+"""
+
 import os
 import asyncio
 import httpx
@@ -7,7 +17,7 @@ async def check_limits():
     load_dotenv()
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        print("Error: No se encontró OPENAI_API_KEY en el archivo .env")
+        print("[ERROR] Variable OPENAI_API_KEY no encontrada en el entorno (.env).")
         return
 
     url = "https://api.openai.com/v1/chat/completions"
@@ -17,46 +27,43 @@ async def check_limits():
     }
     data = {
         "model": "gpt-4o-mini",
-        "messages": [{"role": "user", "content": "Hola"}],
+        "messages": [{"role": "user", "content": "ping"}],
         "max_tokens": 5
     }
 
-    print("Consultando a OpenAI para leer los límites de tu cuenta...\n")
-    
+    print("Consultando cabeceras de cuota y límites en OpenAI...\n")
+
     async with httpx.AsyncClient() as client:
         response = await client.post(url, headers=headers, json=data)
-        
+
         if response.status_code != 200:
-            print(f"Error de OpenAI: {response.status_code} - {response.text}")
+            print(f"[ERROR] Respuesta no exitosa de OpenAI ({response.status_code}): {response.text}")
             return
-            
-        print("="*50)
-        print("LÍMITES DETECTADOS EN TU CUENTA (Modelo: gpt-4o-mini)")
-        print("="*50)
-        
-        # Extraer cabeceras de Rate Limit
-        h = response.headers
-        rpm_limit = h.get('x-ratelimit-limit-requests', 'Desconocido')
-        tpm_limit = h.get('x-ratelimit-limit-tokens', 'Desconocido')
-        
+
+        print("=" * 60)
+        print("LÍMITES DETECTADOS EN LA CUENTA (Modelo: gpt-4o-mini)")
+        print("=" * 60)
+
+        headers_resp = response.headers
+        rpm_limit = headers_resp.get("x-ratelimit-limit-requests", "No disponible")
+        tpm_limit = headers_resp.get("x-ratelimit-limit-tokens", "No disponible")
+
         print(f"- Límite de Peticiones por Minuto (RPM): {rpm_limit}")
         print(f"- Límite de Tokens por Minuto (TPM):     {tpm_limit}")
-        print("-" * 50)
-        
+        print("-" * 60)
+
         try:
             tpm = int(tpm_limit)
             if tpm <= 200000:
-                print(">> DIAGNÓSTICO: Tu cuenta está en TIER 1 (Gratuita/Básica).")
-                print(">> Esta es la razón exacta por la que el sistema debe frenar a ~40 minutos.")
+                print(">> DIAGNÓSTICO: Cuenta en Tier 1 o nivel estándar (<= 200k TPM).")
             elif tpm >= 2000000:
-                print(">> DIAGNÓSTICO: Tu cuenta está en TIER 2 o superior.")
-                print(">> Puedes subir el 'tpm_limit' en routes.py a 2,000,000 para ir rapidísimo.")
+                print(">> DIAGNÓSTICO: Cuenta en Tier de alta concurrencia (>= 2M TPM).")
             else:
-                print(f">> DIAGNÓSTICO: Tu límite es de {tpm} TPM. Puedes ajustar el 'tpm_limit' en routes.py a {int(tpm * 0.9)}.")
-        except:
-            print("No se pudo calcular el Tier automáticamente.")
-            
-        print("="*50 + "\n")
+                print(f">> DIAGNÓSTICO: Capacidad asignada: {tpm:,} TPM.")
+        except (ValueError, TypeError):
+            print("No fue posible inferir el Tier automáticamente a partir del valor retornado.")
+
+        print("=" * 60 + "\n")
 
 if __name__ == "__main__":
     asyncio.run(check_limits())

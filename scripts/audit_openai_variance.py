@@ -1,3 +1,13 @@
+﻿"""
+Auditoría de Varianza y Estabilidad de Inferencia OpenAI.
+
+Compara la clasificación de macrocausas y el cálculo de métricas SDI entre una
+ejecución de referencia del pipeline y la API sobre el dataset de 1.000 comentarios,
+generando el reporte de varianza exhaustivo en formato JSON.
+
+Uso:
+    python scripts/audit_openai_variance.py
+"""
 import pandas as pd
 import asyncio
 import time
@@ -252,7 +262,7 @@ async def run_e2e():
         "explicacion": "La tasa de coincidencia mide qué tan determinista fue OpenAI al correr el mismo prompt dos veces. La desviación SDI mide cuánto afectó esa varianza al puntaje matemático final."
     }
     
-    with open("reporte_varianza_exhaustivo.json", "w", encoding="utf-8") as f:
+    with open("docs/audit/reporte_varianza_exhaustivo.json", "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
         
     print("\n================================================")
@@ -265,3 +275,4 @@ async def run_e2e():
     
 if __name__ == "__main__":
     asyncio.run(run_e2e())
+

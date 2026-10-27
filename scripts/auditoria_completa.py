@@ -1,14 +1,12 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-=============================================================================
-AUDITORÍA COMPLETA DE PARIDAD — Social Debt API Model
-=============================================================================
-Compara paso a paso los archivos de referencia del Colab contra los archivos
-de auditoría generados por la API (con detección dinámica de carpetas y archivos).
+Auditoría Integral de Paridad Numérica y Semántica.
+
+Compara paso a paso los archivos de referencia del pipeline de investigación
+contra los archivos de auditoría generados por la API (con detección dinámica).
 
 Uso:
-    python3 auditoria_completa.py
-=============================================================================
+    python scripts/auditoria_completa.py
 """
 
 import os

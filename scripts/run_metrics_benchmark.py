@@ -1,3 +1,13 @@
+﻿"""
+Benchmark de Métricas de Deuda Social por Issue (SDI).
+
+Envía un conjunto sintético de comentarios agrupados por identificador de issue
+al endpoint por lotes de la API, evalúa el cálculo del Social Debt Index (SDI)
+y monitorea el consumo de CPU y memoria del proceso.
+
+Uso:
+    python scripts/run_metrics_benchmark.py
+"""
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -137,3 +147,4 @@ async def run_issue_metrics_test():
 
 if __name__ == "__main__":
     asyncio.run(run_issue_metrics_test())
+

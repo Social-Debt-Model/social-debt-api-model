@@ -1,3 +1,13 @@
+﻿"""
+Prueba de Carga y Rendimiento en Procesamiento por Lotes.
+
+Permite enviar datasets de volumen controlado (100, 1000, 2593 comentarios o dataset completo)
+al endpoint asíncrono de procesamiento por lotes, monitoreando el consumo de recursos de hardware
+(CPU, RAM) y calculando proyecciones de tiempo para volúmenes superiores.
+
+Uso:
+    python scripts/run_interactive_load_test.py
+"""
 import asyncio
 import httpx
 import time
@@ -52,7 +62,7 @@ async def run_reduced_dataset_test():
     elif opcion == "3":
         csv_filename = os.path.join(BASE_DIR, "data/dataset_test_2593.csv")
     elif opcion == "4":
-        csv_filename = os.path.join(BASE_DIR, "Modelo_adaptativo_deuda_social_julio/Dataset_original/dataset_master_clean2.csv")
+        csv_filename = os.path.join(BASE_DIR, "docs/research/baseline_notebooks/Dataset_original/dataset_master_clean2.csv")
     elif opcion == "5":
         print("Prueba cancelada.")
         return
@@ -251,3 +261,4 @@ async def run_reduced_dataset_test():
 
 if __name__ == "__main__":
     asyncio.run(run_reduced_dataset_test())
+
