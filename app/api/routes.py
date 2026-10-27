@@ -1,5 +1,4 @@
 import os
-# Apagar globalmente las barras de progreso (tqdm) de librerias como SBERT/HuggingFace
 os.environ["TQDM_DISABLE"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -233,7 +232,6 @@ async def background_batch_process(job_id: str, df: pd.DataFrame, text_col: str,
                     "processed": processed
                 })
                 
-                # Log minimalista del chunk
                 chunk_num = (i // chunk_size) + 1
                 logger.info(f"JOB {job_id} chunk {chunk_num} ({processed}/{total})")
                     

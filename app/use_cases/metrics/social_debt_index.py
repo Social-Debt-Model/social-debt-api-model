@@ -110,7 +110,6 @@ def calculate_batch_sdi(issues_data: dict) -> dict:
             if row["risks_repr"] != "[]":
                 risk_counter[row["risks_repr"]] += 1
                 
-            # Aggregate the new fields
             if "preventive_strategies_repr" in row and row["preventive_strategies_repr"] != "[]":
                 prev_counter[row["preventive_strategies_repr"]] += 1
             if "effects_repr" in row and row["effects_repr"] != "[]":

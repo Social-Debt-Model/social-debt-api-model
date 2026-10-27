@@ -3,14 +3,14 @@ from enum import Enum
 from typing import Optional
 
 class SocialDebtCause(str, Enum):
-    A = "A" # Type dependencies, interfaces, and architecture
-    B = "B" # Code and repository quality, structure, and traceability
-    C = "C" # Context, documentation, and communication dependencies
-    D = "D" # Logical or temporal execution, and testing dependencies
-    E = "E" # Expertise and support dependencies
-    F = "F" # Task allocation and scheduling dependencies
-    G = "G" # Resource, tooling, access, and validation dependencies
-    H = "H" # No identificable
+    A = "A"
+    B = "B"
+    C = "C"
+    D = "D"
+    E = "E"
+    F = "F"
+    G = "G"
+    H = "H"
 
 class ClassificationRequest(BaseModel):
     text: str = Field(..., description="The GitHub comment or text to be classified.")

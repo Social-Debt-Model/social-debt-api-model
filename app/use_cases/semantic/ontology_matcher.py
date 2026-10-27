@@ -4,7 +4,6 @@ import torch
 from sentence_transformers import SentenceTransformer, util
 from app.infrastructure.ontology_client import ontology_causes
 
-# Forzar máxima precisión matemática para asegurar paridad con GPU
 torch.set_default_dtype(torch.float64)
 
 model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
